@@ -1,14 +1,11 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Net.Sockets;
 
 using System.Net.NetworkInformation;
-
-using System.Diagnostics;
-using System.Runtime.Remoting.Messaging;
 
 
 /*
@@ -349,7 +346,7 @@ namespace Heijden.DNS
 				for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
 				{
 					Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-					socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, m_Timeout * 1000);
+					socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, m_Timeout);
 
 					try
 					{
@@ -645,170 +642,6 @@ namespace Heijden.DNS
 			return sb.ToString();
 		}
 
-		#region Deprecated methods in the original System.Net.DNS class
-
-		/// <summary>
-		///		Returns the Internet Protocol (IP) addresses for the specified host.
-		/// </summary>
-		/// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-		/// <returns>
-		///		An array of type System.Net.IPAddress that holds the IP addresses for the
-		///		host that is specified by the hostNameOrAddress parameter. 
-		///</returns>
-		public IPAddress[] GetHostAddresses(string hostNameOrAddress)
-		{
-			IPHostEntry entry = GetHostEntry(hostNameOrAddress);
-			return entry.AddressList;
-		}
-
-		private delegate IPAddress[] GetHostAddressesDelegate(string hostNameOrAddress);
-
-		/// <summary>
-		///		Asynchronously returns the Internet Protocol (IP) addresses for the specified
-		///     host.
-		/// </summary>
-		/// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-		/// <param name="requestCallback">
-		///		An System.AsyncCallback delegate that references the method to invoke when
-		///     the operation is complete.
-		/// </param>
-		/// <param name="stateObject">
-		///		A user-defined object that contains information about the operation. This
-		///     object is passed to the requestCallback delegate when the operation is complete.
-		///</param>
-		/// <returns>An System.IAsyncResult instance that references the asynchronous request.</returns>
-		public IAsyncResult BeginGetHostAddresses(string hostNameOrAddress, AsyncCallback requestCallback, object stateObject)
-		{
-			GetHostAddressesDelegate g = new GetHostAddressesDelegate(GetHostAddresses);
-			return g.BeginInvoke(hostNameOrAddress, requestCallback, stateObject);
-		}
-
-		/// <summary>
-		///		Ends an asynchronous request for DNS information.
-		/// </summary>
-		/// <param name="AsyncResult">
-		///		An System.IAsyncResult instance returned by a call to the Heijden.Dns.Resolver.BeginGetHostAddresses(System.String,System.AsyncCallback,System.Object)
-		///		method.
-		/// </param>
-		/// <returns></returns>
-		public IPAddress[] EndGetHostAddresses(IAsyncResult AsyncResult)
-		{
-			AsyncResult aResult = (AsyncResult)AsyncResult;
-			GetHostAddressesDelegate g = (GetHostAddressesDelegate)aResult.AsyncDelegate;
-			return g.EndInvoke(AsyncResult);
-		}
-
-		/// <summary>
-		///		Creates an System.Net.IPHostEntry instance from the specified System.Net.IPAddress.
-		/// </summary>
-		/// <param name="ip">An System.Net.IPAddress.</param>
-		/// <returns>An System.Net.IPHostEntry.</returns>
-		public IPHostEntry GetHostByAddress(IPAddress ip)
-		{
-			return GetHostEntry(ip);
-		}
-
-		/// <summary>
-		///		Creates an System.Net.IPHostEntry instance from an IP address.
-		/// </summary>
-		/// <param name="address">An IP address.</param>
-		/// <returns>An System.Net.IPHostEntry instance.</returns>
-		public IPHostEntry GetHostByAddress(string address)
-		{
-			return GetHostEntry(address);
-		}
-
-		/// <summary>
-		///		Gets the DNS information for the specified DNS host name.
-		/// </summary>
-		/// <param name="hostName">The DNS name of the host</param>
-		/// <returns>An System.Net.IPHostEntry object that contains host information for the address specified in hostName.</returns>
-		public IPHostEntry GetHostByName(string hostName)
-		{
-			return MakeEntry(hostName);
-		}
-
-		private delegate IPHostEntry GetHostByNameDelegate(string hostName);
-
-		/// <summary>
-		///		Asynchronously resolves an IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="hostName">The DNS name of the host</param>
-		/// <param name="requestCallback">An System.AsyncCallback delegate that references the method to invoke when the operation is complete.</param>
-		/// <param name="stateObject">
-		///		A user-defined object that contains information about the operation. This
-		///		object is passed to the requestCallback delegate when the operation is complete.
-		/// </param>
-		/// <returns>An System.IAsyncResult instance that references the asynchronous request.</returns>
-		public IAsyncResult BeginGetHostByName(string hostName, AsyncCallback requestCallback, object stateObject)
-		{
-			GetHostByNameDelegate g = new GetHostByNameDelegate(GetHostByName);
-			return g.BeginInvoke(hostName, requestCallback, stateObject);
-		}
-
-		/// <summary>
-		///		Ends an asynchronous request for DNS information.
-		/// </summary>
-		/// <param name="AsyncResult">
-		///		An System.IAsyncResult instance returned by a call to an 
-		///		Heijden.Dns.Resolver.BeginGetHostByName method.
-		/// </param>
-		/// <returns></returns>
-		public IPHostEntry EndGetHostByName(IAsyncResult AsyncResult)
-		{
-			AsyncResult aResult = (AsyncResult)AsyncResult;
-			GetHostByNameDelegate g = (GetHostByNameDelegate)aResult.AsyncDelegate;
-			return g.EndInvoke(AsyncResult);
-		}
-
-		/// <summary>
-		///		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="hostName">A DNS-style host name or IP address.</param>
-		/// <returns></returns>
-		//[Obsolete("no problem",false)]
-		public IPHostEntry Resolve(string hostName)
-		{
-			return MakeEntry(hostName);
-		}
-
-		private delegate IPHostEntry ResolveDelegate(string hostName);
-		
-		/// <summary>
-		///		Begins an asynchronous request to resolve a DNS host name or IP address to
-		///     an System.Net.IPAddress instance.
-		/// </summary>
-		/// <param name="hostName">The DNS name of the host.</param>
-		/// <param name="requestCallback">
-		///		An System.AsyncCallback delegate that references the method to invoke when
-		///     the operation is complete.
-		///	</param>
-		/// <param name="stateObject">
-		///		A user-defined object that contains information about the operation. This
-		///     object is passed to the requestCallback delegate when the operation is complete.
-		/// </param>
-		/// <returns>An System.IAsyncResult instance that references the asynchronous request.</returns>
-		public IAsyncResult BeginResolve(string hostName, AsyncCallback requestCallback, object stateObject)
-		{
-			ResolveDelegate g = new ResolveDelegate(Resolve);
-			return g.BeginInvoke(hostName, requestCallback, stateObject);
-		}
-
-		/// <summary>
-		///		Ends an asynchronous request for DNS information.
-		/// </summary>
-		/// <param name="AsyncResult">
-		///		An System.IAsyncResult instance that is returned by a call to the System.Net.Dns.BeginResolve(System.String,System.AsyncCallback,System.Object)
-		///     method.
-		/// </param>
-		/// <returns>An System.Net.IPHostEntry object that contains DNS information about a host.</returns>
-		public IPHostEntry EndResolve(IAsyncResult AsyncResult)
-		{
-			AsyncResult aResult = (AsyncResult)AsyncResult;
-			ResolveDelegate g = (ResolveDelegate)aResult.AsyncDelegate;
-			return g.EndInvoke(AsyncResult);
-		}
-		#endregion
 
 		/// <summary>
 		///		Resolves an IP address to an System.Net.IPHostEntry instance.
@@ -844,73 +677,6 @@ namespace Heijden.DNS
 				return MakeEntry(hostNameOrAddress);
 		}
 
-		private delegate IPHostEntry GetHostEntryViaIPDelegate(IPAddress ip);
-		private delegate IPHostEntry GetHostEntryDelegate(string hostNameOrAddress);
-
-		/// <summary>
-		/// Asynchronously resolves a host name or IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-		/// <param name="requestCallback">
-		///		An System.AsyncCallback delegate that references the method to invoke when
-		///		the operation is complete.
-		///</param>
-		/// <param name="stateObject">
-		///		A user-defined object that contains information about the operation. This
-		///		object is passed to the requestCallback delegate when the operation is complete.
-		/// </param>
-		/// <returns>An System.IAsyncResult instance that references the asynchronous request.</returns>
-		public IAsyncResult BeginGetHostEntry(string hostNameOrAddress, AsyncCallback requestCallback, object stateObject)
-		{
-			GetHostEntryDelegate g = new GetHostEntryDelegate(GetHostEntry);
-			return g.BeginInvoke(hostNameOrAddress, requestCallback, stateObject);
-		}
-
-		/// <summary>
-		/// Asynchronously resolves an IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="ip">The IP address to resolve.</param>
-		/// <param name="requestCallback">
-		///		An System.AsyncCallback delegate that references the method to invoke when
-		///		the operation is complete.
-		/// </param>
-		/// <param name="stateObject">
-		///		A user-defined object that contains information about the operation. This
-		///     object is passed to the requestCallback delegate when the operation is complete.
-		/// </param>
-		/// <returns>An System.IAsyncResult instance that references the asynchronous request.</returns>
-		public IAsyncResult BeginGetHostEntry(IPAddress ip, AsyncCallback requestCallback, object stateObject)
-		{
-			GetHostEntryViaIPDelegate g = new GetHostEntryViaIPDelegate(GetHostEntry);
-			return g.BeginInvoke(ip, requestCallback, stateObject);
-		}
-
-		/// <summary>
-		/// Ends an asynchronous request for DNS information.
-		/// </summary>
-		/// <param name="AsyncResult">
-		///		An System.IAsyncResult instance returned by a call to an 
-		///		Overload:Heijden.Dns.Resolver.BeginGetHostEntry method.
-		/// </param>
-		/// <returns>
-		///		An System.Net.IPHostEntry instance that contains address information about
-		///		the host. 
-		///</returns>
-		public IPHostEntry EndGetHostEntry(IAsyncResult AsyncResult)
-		{
-			AsyncResult aResult = (AsyncResult)AsyncResult;
-			if (aResult.AsyncDelegate is GetHostEntryDelegate)
-			{
-				GetHostEntryDelegate g = (GetHostEntryDelegate)aResult.AsyncDelegate;
-				return g.EndInvoke(AsyncResult);
-			}
-			if (aResult.AsyncDelegate is GetHostEntryViaIPDelegate)
-			{
-				GetHostEntryViaIPDelegate g = (GetHostEntryViaIPDelegate)aResult.AsyncDelegate;
-				return g.EndInvoke(AsyncResult);
-			}
-			return null;
-		}
 
 		private enum RRRecordStatus
 		{

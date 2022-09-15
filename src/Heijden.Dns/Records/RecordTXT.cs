@@ -36,10 +36,12 @@ namespace Heijden.DNS
 
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder();
-            		foreach (string txt in TXT)
-                		sb.Append(txt);
-			return sb.ToString().TrimEnd();
+            var stringBuilder = new StringBuilder();
+            foreach (var str in this.TXT)
+            {
+                stringBuilder.Append($"\"{str}\" ");
+            }
+            return stringBuilder.ToString().TrimEnd();
 		}
 	}
 }
