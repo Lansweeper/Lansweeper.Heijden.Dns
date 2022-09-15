@@ -8,7 +8,5 @@ namespace Heijden.DNS
 		/// The Resource Record this RDATA record belongs to
 		/// </summary>
 		public RR RR;
-
-        public virtual string RecordToString() => this.RR.ToString();
 	}
 }

@@ -42,16 +42,14 @@ namespace TestConsoleApp
 
                     foreach (var resdet in detailres.Answers)
                     {
-                        sb.AppendLine($"\t{resdet.Type} {resdet.RECORD.RecordToString()}");
-                        ProcessOutputLine(details, res.RECORD.ToString(), resdet.Type.ToString(),
-                            resdet.RECORD.RecordToString());
+                        sb.AppendLine($"\t{resdet.Type} {resdet.RECORD}");
+                        ProcessOutputLine(details, res.RECORD.ToString(), resdet.Type.ToString(), resdet.RECORD.ToString());
                     }
 
                     foreach (var resdet in detailres.Additionals)
                     {
-                        sb.AppendLine($"\t{resdet.Type} {resdet.RECORD.RecordToString()}");
-                        ProcessOutputLine(details, res.RECORD.ToString(), resdet.Type.ToString(),
-                            resdet.RECORD.RecordToString());
+                        sb.AppendLine($"\t{resdet.Type} {resdet.RECORD}");
+                        ProcessOutputLine(details, res.RECORD.ToString(), resdet.Type.ToString(), resdet.RECORD.ToString());
                     }
                 }
 
