@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.4...v1.1.5) (2022-09-16)
+
+
+### Bug Fixes
+
+* Fixing repo url ([64e94c5](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/64e94c55cd92d48acc439009786855baa55b5ebf))
+
 ## [1.1.4](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.3...v1.1.4) (2022-09-16)
 
 
