@@ -2,7 +2,7 @@ const { version: previousVersion } = require("./package.json");
 const projectfolder = "src/";
 const csprojfile = "src/Lansweeper.Heijden.Dns/Lansweeper.Heijden.Dns.csproj";
 const nugetpackage = "Lansweeper.Heijden.Dns";
-const gitprimarybranch = "main";
+const gitprimarybranch = "master";
 
 module.exports = {
   "branches": [
