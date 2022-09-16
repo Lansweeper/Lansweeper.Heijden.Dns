@@ -3,11 +3,11 @@ version: 2.1
 parameters:
   project-folder:
     type: string
-    default: "src/Heijden.Dns/"
+    default: "src/Lansweeper.Heijden.Dns/"
 
   csproj-file:
     type: string
-    default: "Heijden.Dns.csproj"
+    default: "Lansweeper.Heijden.Dns.csproj"
 
   sonar-project:
     type: string
