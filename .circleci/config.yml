@@ -96,7 +96,7 @@ jobs:
 
       - run:
           name: Replace nuspec version string with next release
-          command: sed -i -E 's/<Version>$version/<Version>\${$VERSION}/' << pipeline.parameters.project-folder >>Lansweeper.Heijden.Dns.nuspec
+          command: sed -i -E 's/<version>/<version>$VERSION/' src/Lansweeper.Heijden.Dns.nuspec
 
       - run:
           name: Pack the nuget
