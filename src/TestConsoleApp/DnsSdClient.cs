@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using Heijden.DNS;
-using TestConsoleApp.Converters;
 
 namespace TestConsoleApp
 {
@@ -20,7 +19,7 @@ namespace TestConsoleApp
             _client = new Resolver(endPoint);
         }
 
-        public DnsSdData Query(int timeOut = 2, bool useCache = false, int retries = 1)
+        public DnsSdData Query(int timeOut = 2000, bool useCache = false, int retries = 1)
         {
             var details = new DnsSdData();
             var sb = new StringBuilder();
@@ -79,32 +78,7 @@ namespace TestConsoleApp
         {
             //Processes output lines and match to model/serial,...
 
-            //extract mac address from workstation
-            // PTR PRDLDOCKER01 [00:50:56:b8:24:d1]._workstation._tcp.local.
-            // PTR RT-AC56U-E580 [d8:50:e6:d8:e5:80]._workstation._tcp.local.
-            if (string.Equals(recordType, "PTR", StringComparison.InvariantCultureIgnoreCase)
-                && string.Equals(parentPtr, "_workstation._tcp.local.", StringComparison.InvariantCultureIgnoreCase))
-            {
-                try
-                {
-                    if (detailOutput.Mid(detailOutput.Length - 26, 1) == "]"
-                        && detailOutput.Mid(detailOutput.Length - 44, 1) == "["
-                        && detailOutput.Mid(detailOutput.Length - 41, 1) == ":")
-                    {
-                        var mac = MacAddressConverter.Convert(detailOutput.Mid(detailOutput.Length - 43, 17));
-                        if (!string.IsNullOrWhiteSpace(mac) && !details.MacAddresses.Contains(mac))
-                        {
-                            details.MacAddresses.Add(mac);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Error getting mac addresses during process outputline of dns sd:", e);
-                    Console.WriteLine(e);
-                }
-            }
-
+            
             //extract hostname from SRV record (third number is the port name of the service)
             // SRV 0 0 9 PRDLDOCKER01.local.
             // SRV 0 0 80 NAS.local.
@@ -158,63 +132,6 @@ namespace TestConsoleApp
                         if (!dict.ContainsKey(key))
                         {
                             dict.Add(key, part.Mid(pos + 1).Trim());
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(details.Manufacturer) && dict.TryGetValue("VENDOR", out var vendor))
-                    {
-                        details.Manufacturer = vendor;
-                    }
-                    else if (string.IsNullOrEmpty(details.Manufacturer) && dict.TryGetValue("MFG", out var mfg))
-                    {
-                        details.Manufacturer = mfg;
-                    }
-                    else if (string.IsNullOrEmpty(details.Manufacturer) &&
-                             dict.TryGetValue("manufacturer", out var manufacturer))
-                    {
-                        details.Manufacturer = manufacturer;
-                    }
-
-                    if (string.IsNullOrEmpty(details.Model) && dict.TryGetValue("MODEL", out var model)
-                                                            && !string.Equals(model, "Xserve",
-                                                                StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        details.Model = model;
-                    }
-                    else if (string.IsNullOrEmpty(details.Model) && dict.TryGetValue("MDL", out var mdl)
-                                                                 && !string.Equals(mdl, "Xserve",
-                                                                     StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        details.Model = mdl;
-                    }
-
-                    if (string.IsNullOrEmpty(details.SerialNumber) && dict.TryGetValue("SERIALNUM", out var serialNr))
-                    {
-                        details.SerialNumber = serialNr;
-                    }
-
-                    if (string.IsNullOrEmpty(details.SerialNumber) &&
-                        dict.TryGetValue("serialNumber", out var serialNumber))
-                    {
-                        details.SerialNumber = serialNumber;
-                    }
-
-                    if (string.IsNullOrEmpty(details.SerialNumber) && dict.TryGetValue("SERIAL", out var serial))
-                    {
-                        details.SerialNumber = serial;
-                    }
-
-                    if (dict.TryGetValue("MAC_ADDRESS", out var macAddress))
-                    {
-                        var splitter = macAddress.Split('|');
-
-                        foreach (var macsplit in splitter)
-                        {
-                            var mac = MacAddressConverter.Convert(macsplit);
-                            if (!string.IsNullOrWhiteSpace(mac) && !details.MacAddresses.Contains(macsplit))
-                            {
-                                details.MacAddresses.Add(macsplit);
-                            }
                         }
                     }
                 }

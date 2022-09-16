@@ -27,13 +27,7 @@ namespace Heijden.DNS
 		/// <summary>
 		/// Version of this set of routines, when not in a library
 		/// </summary>
-		public string Version
-		{
-			get
-			{
-				return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-			}
-		}
+		public string Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
 		/// <summary>
 		/// Default DNS port
@@ -51,14 +45,11 @@ namespace Heijden.DNS
 
 		private ushort m_Unique;
 		private bool m_UseCache;
-		private bool m_Recursion;
 		private int m_Retries;
-		private int m_Timeout;
-		private TransportType m_TransportType;
 
-		private List<IPEndPoint> m_DnsServers;
+		private readonly List<IPEndPoint> m_DnsServers;
 
-		private Dictionary<string,Response> m_ResponseCache;
+		private readonly Dictionary<string,Response> m_ResponseCache;
 
 		/// <summary>
 		/// Constructor of Resolver using DNS servers specified.
@@ -72,10 +63,10 @@ namespace Heijden.DNS
 
 			m_Unique = (ushort)(new Random()).Next();
 			m_Retries = 3;
-			m_Timeout = 1;
-			m_Recursion = true;
+			TimeOut = 1000;
+			Recursion = true;
 			m_UseCache = true;
-			m_TransportType = TransportType.Udp;
+			TransportType = TransportType.Udp;
 		}
 
 		/// <summary>
@@ -158,17 +149,7 @@ namespace Heijden.DNS
 		/// <summary>
 		/// Gets or sets timeout in milliseconds
 		/// </summary>
-		public int TimeOut
-		{
-			get
-			{
-				return m_Timeout;
-			}
-			set
-			{
-				m_Timeout = value;
-			}
-		}
+		public int TimeOut { get; set; }
 
 		/// <summary>
 		/// Gets or sets number of retries before giving up
@@ -189,32 +170,12 @@ namespace Heijden.DNS
 		/// <summary>
 		/// Gets or set recursion for doing queries
 		/// </summary>
-		public bool Recursion
-		{
-			get
-			{
-				return m_Recursion;
-			}
-			set
-			{
-				m_Recursion = value;
-			}
-		}
+		public bool Recursion { get; set; }
 
 		/// <summary>
 		/// Gets or sets protocol to use
 		/// </summary>
-		public TransportType TransportType
-		{
-			get
-			{
-				return m_TransportType;
-			}
-			set
-			{
-				m_TransportType = value;
-			}
-		}
+		public TransportType TransportType { get; set; }
 
 		/// <summary>
 		/// Gets or sets list of DNS servers to use
@@ -345,30 +306,32 @@ namespace Heijden.DNS
 			{
 				for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
 				{
-					Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-					socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, m_Timeout);
+					using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+					{
+						socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
 
-					try
-					{
-						socket.SendTo(request.Data, m_DnsServers[intDnsServer]);
-						int intReceived = socket.Receive(responseMessage);
-						byte[] data = new byte[intReceived];
-						Array.Copy(responseMessage, data, intReceived);
-						Response response = new Response(m_DnsServers[intDnsServer], data);
-						AddToCache(response);
-						return response;
-					}
-					catch (SocketException)
-					{
-						Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-						continue; // next try
-					}
-					finally
-					{
-						m_Unique++;
+						try
+						{
+							socket.SendTo(request.Data, m_DnsServers[intDnsServer]);
+							int intReceived = socket.Receive(responseMessage);
+							byte[] data = new byte[intReceived];
+							Array.Copy(responseMessage, data, intReceived);
+							Response response = new Response(m_DnsServers[intDnsServer], data);
+							AddToCache(response);
+							return response;
+						}
+						catch (SocketException)
+						{
+							Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+							continue; // next try
+						}
+						finally
+						{
+							m_Unique++;
 
-						// close the socket
-						socket.Close();
+							// close the socket
+							socket.Close();
+						}
 					}
 				}
 			}
@@ -382,107 +345,106 @@ namespace Heijden.DNS
 			//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 			//sw.Start();
 
-			byte[] responseMessage = new byte[512];
-
 			for (int intAttempts = 0; intAttempts < m_Retries; intAttempts++)
 			{
 				for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
 				{
-					TcpClient tcpClient = new TcpClient();
-					tcpClient.ReceiveTimeout = m_Timeout * 1000;
-
-					try
+					using (var tcpClient = new TcpClient())
 					{
-						IAsyncResult result = tcpClient.BeginConnect(m_DnsServers[intDnsServer].Address, m_DnsServers[intDnsServer].Port, null, null);
+						tcpClient.ReceiveTimeout = TimeOut;
 
-						bool success = result.AsyncWaitHandle.WaitOne(m_Timeout*1000, true);
-
-						if (!success || !tcpClient.Connected)
+						try
 						{
-							tcpClient.Close();
-							Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-							continue;
-						}
+							IAsyncResult result = tcpClient.BeginConnect(m_DnsServers[intDnsServer].Address, m_DnsServers[intDnsServer].Port, null, null);
 
-						BufferedStream bs = new BufferedStream(tcpClient.GetStream());
+							bool success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
 
-						byte[] data = request.Data;
-						bs.WriteByte((byte)((data.Length >> 8) & 0xff));
-						bs.WriteByte((byte)(data.Length & 0xff));
-						bs.Write(data, 0, data.Length);
-						bs.Flush();
-
-						Response TransferResponse = new Response();
-						int intSoa = 0;
-						int intMessageSize = 0;
-
-						//Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
-
-						while (true)
-						{
-							int intLength = bs.ReadByte() << 8 | bs.ReadByte();
-							if (intLength <= 0)
+							if (!success || !tcpClient.Connected)
 							{
 								tcpClient.Close();
 								Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-								throw new SocketException(); // next try
+								continue;
 							}
 
-							intMessageSize += intLength;
-
-							data = new byte[intLength];
-							bs.Read(data, 0, intLength);
-							Response response = new Response(m_DnsServers[intDnsServer], data);
-
-							//Debug.WriteLine("Received "+ (intLength+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
-
-							if (response.header.RCODE != RCode.NoError)
-								return response;
-
-							if (response.Questions[0].QType != QType.AXFR)
+							using (BufferedStream bs = new BufferedStream(tcpClient.GetStream()))
 							{
-								AddToCache(response);
-								return response;
+								byte[] data = request.Data;
+								bs.WriteByte((byte)((data.Length >> 8) & 0xff));
+								bs.WriteByte((byte)(data.Length & 0xff));
+								bs.Write(data, 0, data.Length);
+								bs.Flush();
+
+								Response TransferResponse = new Response();
+								int intSoa = 0;
+								int intMessageSize = 0;
+
+								//Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
+
+								while (true)
+								{
+									int intLength = bs.ReadByte() << 8 | bs.ReadByte();
+									if (intLength <= 0)
+									{
+										tcpClient.Close();
+										Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+										throw new SocketException(); // next try
+									}
+
+									intMessageSize += intLength;
+
+									data = new byte[intLength];
+									bs.Read(data, 0, intLength);
+									Response response = new Response(m_DnsServers[intDnsServer], data);
+
+									//Debug.WriteLine("Received "+ (intLength+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
+
+									if (response.header.RCODE != RCode.NoError)
+										return response;
+
+									if (response.Questions[0].QType != QType.AXFR)
+									{
+										AddToCache(response);
+										return response;
+									}
+
+									// Zone transfer!!
+
+									if(TransferResponse.Questions.Count==0)
+										TransferResponse.Questions.AddRange(response.Questions);
+									TransferResponse.Answers.AddRange(response.Answers);
+									TransferResponse.Authorities.AddRange(response.Authorities);
+									TransferResponse.Additionals.AddRange(response.Additionals);
+
+									if (response.Answers[0].Type == Type.SOA)
+										intSoa++;
+
+									if (intSoa == 2)
+									{
+										TransferResponse.header.QDCOUNT = (ushort)TransferResponse.Questions.Count;
+										TransferResponse.header.ANCOUNT = (ushort)TransferResponse.Answers.Count;
+										TransferResponse.header.NSCOUNT = (ushort)TransferResponse.Authorities.Count;
+										TransferResponse.header.ARCOUNT = (ushort)TransferResponse.Additionals.Count;
+										TransferResponse.MessageSize = intMessageSize;
+										return TransferResponse;
+									}
+								}
 							}
-
-							// Zone transfer!!
-
-							if(TransferResponse.Questions.Count==0)
-								TransferResponse.Questions.AddRange(response.Questions);
-							TransferResponse.Answers.AddRange(response.Answers);
-							TransferResponse.Authorities.AddRange(response.Authorities);
-							TransferResponse.Additionals.AddRange(response.Additionals);
-
-							if (response.Answers[0].Type == Type.SOA)
-									intSoa++;
-
-							if (intSoa == 2)
-							{
-								TransferResponse.header.QDCOUNT = (ushort)TransferResponse.Questions.Count;
-								TransferResponse.header.ANCOUNT = (ushort)TransferResponse.Answers.Count;
-								TransferResponse.header.NSCOUNT = (ushort)TransferResponse.Authorities.Count;
-								TransferResponse.header.ARCOUNT = (ushort)TransferResponse.Additionals.Count;
-								TransferResponse.MessageSize = intMessageSize;
-								return TransferResponse;
-							}
+						} // try
+						catch (SocketException)
+						{
+							continue; // next try
 						}
-					} // try
-					catch (SocketException)
-					{
-						continue; // next try
-					}
-					finally
-					{
-						m_Unique++;
+						finally
+						{
+							m_Unique++;
 
-						// close the socket
-						tcpClient.Close();
+							// close the socket
+							tcpClient.Close();
+						}
 					}
 				}
 			}
-			Response responseTimeout = new Response();
-			responseTimeout.Error = "Timeout Error";
-			return responseTimeout;
+			return new Response { Error = "Timeout Error" };
 		}
 
 		/// <summary>
@@ -525,12 +487,12 @@ namespace Heijden.DNS
 		private Response GetResponse(Request request)
 		{
 			request.header.ID = m_Unique;
-			request.header.RD = m_Recursion;
+			request.header.RD = Recursion;
 
-			if (m_TransportType == TransportType.Udp)
+			if (TransportType == TransportType.Udp)
 				return UdpRequest(request);
 
-			if (m_TransportType == TransportType.Tcp)
+			if (TransportType == TransportType.Tcp)
 				return TcpRequest(request);
 
 			Response response = new Response();
@@ -690,64 +652,66 @@ namespace Heijden.DNS
 
 		public void LoadRootFile(string strPath)
 		{
-			StreamReader sr = new StreamReader(strPath);
-			while (!sr.EndOfStream)
+			using (StreamReader sr = new StreamReader(strPath))
 			{
-				string strLine = sr.ReadLine();
-				if (strLine == null)
-					break;
-				int intI = strLine.IndexOf(';');
-				if (intI >= 0)
-					strLine = strLine.Substring(0, intI);
-				strLine = strLine.Trim();
-				if (strLine.Length == 0)
-					continue;
-				RRRecordStatus status = RRRecordStatus.NAME;
-				string Name="";
-				string Ttl="";
-				string Class="";
-				string Type="";
-				string Value="";
-				string strW = "";
-				for (intI = 0; intI < strLine.Length; intI++)
+				while (!sr.EndOfStream)
 				{
-					char C = strLine[intI];
-
-					if (C <= ' ' && strW!="")
+					string strLine = sr.ReadLine();
+					if (strLine == null)
+						break;
+					int intI = strLine.IndexOf(';');
+					if (intI >= 0)
+						strLine = strLine.Substring(0, intI);
+					strLine = strLine.Trim();
+					if (strLine.Length == 0)
+						continue;
+					RRRecordStatus status = RRRecordStatus.NAME;
+					string Name="";
+					string Ttl="";
+					string Class="";
+					string Type="";
+					string Value="";
+					string strW = "";
+					for (intI = 0; intI < strLine.Length; intI++)
 					{
-						switch (status)
-						{
-							case RRRecordStatus.NAME:
-								Name = strW;
-								status = RRRecordStatus.TTL;
-								break;
-							case RRRecordStatus.TTL:
-								Ttl = strW;
-								status = RRRecordStatus.CLASS;
-								break;
-							case RRRecordStatus.CLASS:
-								Class = strW;
-								status = RRRecordStatus.TYPE;
-								break;
-							case RRRecordStatus.TYPE:
-								Type = strW;
-								status = RRRecordStatus.VALUE;
-								break;
-							case RRRecordStatus.VALUE:
-								Value = strW;
-								status = RRRecordStatus.UNKNOWN;
-								break;
-							default:
-								break;
-						}
-						strW = "";
-					}
-					if (C > ' ')
-						strW += C;
-				}
+						char C = strLine[intI];
 
+						if (C <= ' ' && strW!="")
+						{
+							switch (status)
+							{
+								case RRRecordStatus.NAME:
+									Name = strW;
+									status = RRRecordStatus.TTL;
+									break;
+								case RRRecordStatus.TTL:
+									Ttl = strW;
+									status = RRRecordStatus.CLASS;
+									break;
+								case RRRecordStatus.CLASS:
+									Class = strW;
+									status = RRRecordStatus.TYPE;
+									break;
+								case RRRecordStatus.TYPE:
+									Type = strW;
+									status = RRRecordStatus.VALUE;
+									break;
+								case RRRecordStatus.VALUE:
+									Value = strW;
+									status = RRRecordStatus.UNKNOWN;
+									break;
+								default:
+									break;
+							}
+							strW = "";
+						}
+						if (C > ' ')
+							strW += C;
+					}
+
+				}
+				sr.Close();
 			}
-			sr.Close();
 		}
 	} // class
 }
