@@ -1,6 +1,6 @@
 const { version: previousVersion } = require("./package.json");
-const projectfolder = "src/";
-const csprojfile = "Lansweeper.Heijden.Dns/Lansweeper.Heijden.Dns.csproj";
+const projectfolder = "src/Lansweeper.Heijden.Dns/";
+const csprojfile = "Lansweeper.Heijden.Dns.csproj";
 const nugetpackage = "Lansweeper.Heijden.Dns";
 const gitprimarybranch = "master";
 
