@@ -100,7 +100,7 @@ jobs:
 
       - run:
           name: Pack the nuget
-          command: dotnet pack << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release && \
+          command: dotnet pack << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release
 
       - run:
           name: Push the nuget
