@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.1...v1.1.2) (2022-09-16)
+
+
+### Bug Fixes
+
+* location ([2017ad3](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/2017ad389c1e29eb520f1fd508ccd21328be49de))
+
 ## [1.1.1](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.0...v1.1.1) (2022-09-16)
 
 
