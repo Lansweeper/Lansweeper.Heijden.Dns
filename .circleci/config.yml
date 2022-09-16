@@ -19,7 +19,7 @@ executors:
       - image: circleci/node:12
 
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@2.4.1
 
 commands:
   nuget-prepare:
@@ -94,25 +94,6 @@ jobs:
           paths:
             - .
 
-#  example-push-dependency:
-#    docker:
-#      - image: circleci/buildpack-deps
-#    description: Update nuget version in https://github.com/Lansweeper/TARGET
-#    steps:
-#      - attach_workspace:
-#          at: .
-#      - run:
-#          name: push updated nuget version to TARGET
-#          command: |
-#            VERSION=${CIRCLE_TAG#"v"}
-#            echo $VERSION
-#              curl \
-#                -X POST \
-#                -H "Circle-Token: $CIRCLE_TOKEN" \
-#                -H "Content-Type: application/json" \
-#                https://circleci.com/api/v2/project/github/Lansweeper/TARGET/pipeline \
-#                -d "{\"parameters\": { \"release-new-sync-version\": true,  \"version\": \"$VERSION\" } }"
-
 workflows:
   version: 2
 
@@ -121,7 +102,6 @@ workflows:
       - build:
           context:
             - lec-github-packages-rw
-            - SonarCloud
           filters:
             branches:
               ignore: << pipeline.parameters.git-primary-branch >>
@@ -143,16 +123,3 @@ workflows:
           filters:
             branches:
               only: << pipeline.parameters.git-primary-branch >>
-
-#  cd_on_release:
-#    jobs:
-#      - example-push-dependency:
-#          context:
-#            - lec-circleci-release
-#          filters:
-#            # ignore any commit on any branch by default
-#            branches:
-#              ignore: /.*/
-#            # only act on version tags
-#            tags:
-#              only: /^v[0-9]+(\.[0-9]+)*$/

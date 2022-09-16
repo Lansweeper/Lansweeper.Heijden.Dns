@@ -3,7 +3,7 @@
 <package>
   <metadata minClientVersion="3.3">
     <id>Lansweeper.Heijden.Dns</id>
-    <version>$version$</version>
+    <version>1.0.0</version>
     <owners>Lansweeper</owners>
     <authors>Alphons van der Heijden, Geoffrey Huntley</authors>
     <title>Lansweeper.Heijden.Dns</title>
