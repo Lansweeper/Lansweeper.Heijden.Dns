@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.3...v1.1.4) (2022-09-16)
+
+
+### Bug Fixes
+
+* trying to fix issue in publish nuget ([f36a767](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/f36a7670b5c5ac16a01132aed541090b70b65ce9))
+
 ## [1.1.3](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.2...v1.1.3) (2022-09-16)
 
 
