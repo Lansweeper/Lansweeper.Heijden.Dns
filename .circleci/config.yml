@@ -104,7 +104,7 @@ jobs:
 
       - run:
           name: Push the nuget
-          command: dotnet nuget push << pipeline.parameters.project-folder >>bin/Release/Lansweeper.Heijden.Dns.$VERSION.nupkg --source \"github\" --api-key $GITHUB_TOKEN`
+          command: dotnet nuget push << pipeline.parameters.project-folder >>bin/Release/Lansweeper.Heijden.Dns.$VERSION.nupkg --source \"github\" --api-key $GITHUB_TOKEN
 
       - persist_to_workspace:
           root: .
