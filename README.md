@@ -8,3 +8,5 @@ See this [codeproject article](https://www.codeproject.com/Articles/23673/DNS-NE
 - Convert Heijden.DNS to .NET standard 2.0
 - Modify RecordTXT.ToString-method
 - Modify Test project to use LS logic
+- Minor cleanup (added missing usings to dispose of streams and sockets)
+- Fix Timeout mixup (milliseconds <> seconds)
