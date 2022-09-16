@@ -89,6 +89,23 @@ jobs:
       - run:
           name: Increase version with semantic-release
           command: yarn run release
+
+      - run:
+          name: Persist next version to environment
+          command: echo "export VERSION=$(cat package.json | jq --raw-output '.version')" >> $BASH_ENV
+
+      - run:
+          name: Replace nuspec version string with next release
+          command: sed -i -E 's/<Version>$version/<Version>\${$VERSION}/' << pipeline.parameters.project-folder >>Lansweeper.Heijden.Dns.nuspec
+
+      - run:
+          name: Pack the nuget
+          command: dotnet pack << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release && \
+
+      - run:
+          name: Push the nuget
+          command: dotnet nuget push << pipeline.parameters.project-folder >>bin/Release/netstandard2.0/Lansweeper.Heijden.Dns.$VERSION.nupkg --source \"github\" --api-key $GITHUB_TOKEN`
+
       - persist_to_workspace:
           root: .
           paths:

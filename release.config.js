@@ -1,8 +1,4 @@
-const { version: previousVersion } = require("./package.json");
-const projectfolder = "src/";
-const csprojfile = "src/Lansweeper.Heijden.Dns/Lansweeper.Heijden.Dns.csproj";
-const nugetpackage = "Lansweeper.Heijden.Dns";
-const gitprimarybranch = "main";
+const gitprimarybranch = "master";
 
 module.exports = {
   "branches": [
@@ -18,16 +14,6 @@ module.exports = {
       }
     ],
     "@semantic-release/npm",
-    [
-      "@semantic-release/exec",
-      {
-        "prepareCmd": `sed -i -E 's/<Version>${previousVersion}/<Version>\${nextRelease.version}/' ${projectfolder}${csprojfile} && \
-          git add ${projectfolder}${csprojfile} && \
-          git commit -m ":bookmark: Bump from ${previousVersion} to \${nextRelease.version} in ${projectfolder}${csprojfile}" && \
-          dotnet pack ${projectfolder}${csprojfile} --configuration Release && \
-          dotnet nuget push ./${projectfolder}bin/Release/${nugetpackage}.\${nextRelease.version}.nupkg --source \"github\" --api-key $GITHUB_TOKEN`
-      }
-    ],
     [
       "@semantic-release/git",
       {
