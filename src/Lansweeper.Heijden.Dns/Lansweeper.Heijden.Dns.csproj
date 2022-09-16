@@ -3,6 +3,9 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<RootNamespace>Heijden.Dns</RootNamespace>
+		<Description>A reusable DNS resolver for .NET.</Description>
+		<RepositoryUrl>https://github.com/Lansweeper/Lansweeper.Heijden.Dns</RepositoryUrl>
+		<Copyright>Lansweeper</Copyright>
 	</PropertyGroup>
 
 	<ItemGroup>
