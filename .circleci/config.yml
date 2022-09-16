@@ -9,10 +9,6 @@ parameters:
     type: string
     default: "Lansweeper.Heijden.Dns.csproj"
 
-  sonar-project:
-    type: string
-    default: "Lansweeper_Lansweeper.Heijden.Dns"
-
   git-primary-branch:
     type: string
     default: "master"
@@ -24,7 +20,6 @@ executors:
 
 orbs:
   win: circleci/windows@2.2.0
-  sonar-check: lansweeper/sonar@0.0.6
 
 commands:
   nuget-prepare:
@@ -67,29 +62,12 @@ jobs:
     steps:
       - checkout
       - nuget-prepare
-      - run:
-          name: Install SonarScanner for MSBuild .NET Core Global Tool
-          command: dotnet tool install --global dotnet-sonarscanner
-      - run:
-          name: Start SonarScanner
-          command: dotnet sonarscanner begin /k:"<< pipeline.parameters.sonar-project >>" /d:sonar.verbose=true /o:"lansweeper" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login=$Env:SONAR_TOKEN /d:sonar.language="cs"
       - run: dotnet build << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release
-      - run:
-          name: Upload SonarScanner results
-          command: dotnet sonarscanner end /d:sonar.login=$Env:SONAR_TOKEN
 
       - persist_to_workspace:
           root: .
           paths:
             - .
-
-  validate-sonar:
-    executor: node
-    steps:
-      - attach_workspace:
-          at: .
-      - sonar-check/get_sonar_status:
-          report_file: "/home/circleci/project/.sonarqube/out/.sonar/report-task.txt"
 
   release:
     executor: node
@@ -148,20 +126,11 @@ workflows:
             branches:
               ignore: << pipeline.parameters.git-primary-branch >>
 
-      - validate-sonar:
-          context: SonarCloud
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: << pipeline.parameters.git-primary-branch >>
-
   ci_and_release_primary_branch:
     jobs:
       - build:
           context:
             - lec-github-packages-rw
-            - SonarCloud
           filters:
             branches:
               only: << pipeline.parameters.git-primary-branch >>
