@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.2...v1.1.3) (2022-09-16)
+
+
+### Bug Fixes
+
+* character ([5295104](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/52951046d8b6f135f7036a6c542f33db24f4b8d2))
+
 ## [1.1.2](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.1...v1.1.2) (2022-09-16)
 
 
