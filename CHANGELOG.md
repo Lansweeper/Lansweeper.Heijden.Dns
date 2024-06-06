@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.5...v1.2.0) (2024-06-06)
+
+
+### Features
+
+* LAN-16522 Update CODEOWNERS ([acb003c](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/acb003cd7cc49310a7afceae40e7c028227ea79a))
+
 ## [1.1.5](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.4...v1.1.5) (2022-09-16)
 
 
