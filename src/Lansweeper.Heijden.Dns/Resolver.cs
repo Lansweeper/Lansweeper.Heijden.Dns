@@ -297,48 +297,40 @@ namespace Heijden.DNS
 			}
 		}
 
-		private Response UdpRequest(Request request)
-		{
-			// RFC1035 max. size of a UDP datagram is 512 bytes
-			byte[] responseMessage = new byte[512];
+        private Response UdpRequest(Request request)
+        {
+            for (var intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+            {
+                for (var intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
+                {
+                    var endpoint = m_DnsServers[intDnsServer];
+                    using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
+                    udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
 
-			for (int intAttempts = 0; intAttempts < m_Retries; intAttempts++)
-			{
-				for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
-				{
-					using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-					{
-						socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
+                    try
+                    {
+                        udpClient.Send(request.Data);
+                        var result = udpClient.Receive(ref endpoint);
+                        var response = new Response(endpoint, result);
+                        AddToCache(response);
+                        return response;
+                    }
+                    catch (SocketException)
+                    {
+                        Verbose($";; Connection to nameserver {intDnsServer + 1} failed");
+                        continue; // next try
+                    }
+                    finally
+                    {
+                        m_Unique++;
+                        // close the connection
+                        udpClient.Close();
+                    }
+                }
+            }
 
-						try
-						{
-							socket.SendTo(request.Data, m_DnsServers[intDnsServer]);
-							int intReceived = socket.Receive(responseMessage);
-							byte[] data = new byte[intReceived];
-							Array.Copy(responseMessage, data, intReceived);
-							Response response = new Response(m_DnsServers[intDnsServer], data);
-							AddToCache(response);
-							return response;
-						}
-						catch (SocketException)
-						{
-							Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-							continue; // next try
-						}
-						finally
-						{
-							m_Unique++;
-
-							// close the socket
-							socket.Close();
-						}
-					}
-				}
-			}
-			Response responseTimeout = new Response();
-			responseTimeout.Error = "Timeout Error";
-			return responseTimeout;
-		}
+            return new Response { Error = "Timeout Error" };
+        }
 
 		private Response TcpRequest(Request request)
 		{
