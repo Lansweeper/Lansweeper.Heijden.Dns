@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.0...v1.2.1) (2024-06-27)
+
+
+### Bug Fixes
+
+* Memory Leak ([100874f](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/100874f140eb87f367fd0b8882a8756d3b3911e4))
+
 # [1.2.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.1.5...v1.2.0) (2024-06-06)
 
 
