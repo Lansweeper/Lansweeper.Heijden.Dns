@@ -30,7 +30,7 @@
     "semantic-release": "^17.4.2"
   },
   "dependencies": {
-    "yarn": "^1.22.10"
+    "yarn": "^1.22.13"
   },
   "commitlint": {
     "extends": [
