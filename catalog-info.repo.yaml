@@ -1,11 +1,10 @@
-apiVersion: backstage.io/v1alpha1
-kind: Component
+apiVersion: lansweeper.com/v1alpha1
+kind: Repository
 metadata:
-  name: Lansweeper.Heijden.Dns
-  description: A reusable DNS resolver for .NET.
   annotations:
     github.com/project-slug: Lansweeper/Lansweeper.Heijden.Dns
+  description: A reusable DNS resolver for .NET.
+  name: Lansweeper.Heijden.Dns
 spec:
-  type: github-repository
-  owner: discovery-1-team
   lifecycle: stable
+  owner: discovery-1-team
