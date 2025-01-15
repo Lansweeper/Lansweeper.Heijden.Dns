@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: Lansweeper.Heijden.Dns
+  description: A reusable DNS resolver for .NET.
+  version: 1.2.2
+  annotations:
+    github.com/project-slug: Lansweeper/Lansweeper.Heijden.Dns
+    sonarqube.org/project-key: Lansweeper_Lansweeper.Heijden.Dns
+    circleci.com/project-slug: github/Lansweeper/Lansweeper.Heijden.Dns
+spec:
+  type: library
+  lifecycle: production
+  partOf:
+    - repository:default/Lansweeper.Heijden.Dns
+  nuget:
+    version: 1.2.2
+    targetFrameworks:
+      - net6.0
