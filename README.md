@@ -10,3 +10,4 @@ See this [codeproject article](https://www.codeproject.com/Articles/23673/DNS-NE
 - Modify Test project to use LS logic
 - Minor cleanup (added missing usings to dispose of streams and sockets)
 - Fix Timeout mixup (milliseconds <> seconds)
+- Fix memory leak in Resolver.UdpRequest (used an obsolete rule about the maximum size of the UDP request)

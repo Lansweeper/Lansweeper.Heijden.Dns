@@ -1,0 +1,10 @@
+apiVersion: lansweeper.com/v1alpha1
+kind: Repository
+metadata:
+  annotations:
+    github.com/project-slug: Lansweeper/Lansweeper.Heijden.Dns
+  description: A reusable DNS resolver for .NET.
+  name: Lansweeper.Heijden.Dns
+spec:
+  lifecycle: stable
+  owner: discovery-1-team
