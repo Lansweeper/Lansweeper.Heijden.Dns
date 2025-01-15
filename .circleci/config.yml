@@ -111,6 +111,52 @@ jobs:
           paths:
             - .
 
+  update_catalog_info:
+    docker: 
+        - image: mcr.microsoft.com/dotnet/sdk:8.0
+    steps:
+      - attach_workspace:
+          at: . 
+     
+      - run:
+          name: install jq 
+          command: apt update && apt install jq -y && apt-get install -y openssh-client      
+                
+      - run: 
+          name: Config git
+          command: |
+            git remote set-url origin https://$GH_USERNAME:$GH_TOKEN@github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git
+            git config --global core.sshCommand "ssh -o StrictHostKeyChecking=no"
+            
+      - run:
+          name: Get Lansweeper.DotNetCatalogInfoGenerator
+          command: |
+            # Fetch the latest release data
+            release_data=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/Lansweeper/Lansweeper.DotNetCatalogInfoGenerator/releases/latest)
+            
+            echo "Json:"
+            echo "$release_data"
+                        
+            # Extract the asset URLs and names for .json and .dll files (On Linux we don't need the exe file. On Windows we can remove the 'select')
+            assets=$(echo $release_data | jq -r '.assets[] | select(.name | endswith(".json") or endswith(".dll")) | "\(.url) \(.name)"')
+                        
+            # Download each asset
+            echo "$assets" | while read -r url name; do
+              echo "Downloading $name from $url"
+              curl -L -H "Accept: application/octet-stream" -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -o $name $url
+            done
+                                      
+      - run:
+          name: Create the catalog-info.yaml
+          command: dotnet Lansweeper.DotNetCatalogInfoGenerator.dll -t nuget -f << pipeline.parameters.project-folder >> -r ${CIRCLE_PROJECT_REPONAME}
+          
+      - run:
+          name: Add catalog-info.yaml files to git
+          command: |
+            git add << pipeline.parameters.project-folder >>catalog-info.yaml
+            git commit -m ":bento: Update generated files [skip ci]"
+            git push origin $CIRCLE_BRANCH
+            
 workflows:
   version: 2
 
@@ -137,6 +183,15 @@ workflows:
             - lec-github-packages-rw
           requires:
             - build
+          filters:
+            branches:
+              only: << pipeline.parameters.git-primary-branch >>
+              
+      - update_catalog_info:
+          context:
+            - lec-github-release
+          requires:
+            - release
           filters:
             branches:
               only: << pipeline.parameters.git-primary-branch >>
