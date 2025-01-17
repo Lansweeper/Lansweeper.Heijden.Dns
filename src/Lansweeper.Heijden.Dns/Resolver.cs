@@ -243,7 +243,7 @@ namespace Heijden.DNS
 			m_ResponseCache.Clear();
 		}
 
-		private Response SearchInCache(Question question)
+		private Response? SearchInCache(Question question)
 		{
 			if (!m_UseCache)
 				return null;

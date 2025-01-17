@@ -42,7 +42,7 @@ namespace Heijden.DNS
 			return string.Format("{0} {1}", PREFERENCE, EXCHANGE);
 		}
 
-		public int CompareTo(object objA)
+		public int CompareTo(object? objA)
 		{
 			RecordMX recordMX = objA as RecordMX;
 			if (recordMX == null)
