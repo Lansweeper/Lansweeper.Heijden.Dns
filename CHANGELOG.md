@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.2...v1.2.3) (2025-01-17)
+
+
+### Bug Fixes
+
+* catalog info ([741cacc](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/741cacca6e4eb2e1852e22ff5fe8a2f929505a8b))
+
 ## [1.2.2](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.1...v1.2.2) (2025-01-15)
 
 
