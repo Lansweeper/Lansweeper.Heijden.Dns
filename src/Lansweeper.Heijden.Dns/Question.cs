@@ -46,7 +46,7 @@ QCLASS          a two octet code that specifies the class of the query.
 
 public class Question
 {
-    private string _qName;
+    private string _qName = string.Empty;
 
     public string QName
     {

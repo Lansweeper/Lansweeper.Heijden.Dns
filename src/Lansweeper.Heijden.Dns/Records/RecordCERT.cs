@@ -16,7 +16,6 @@ namespace Lansweeper.Heijden.Dns.Records;
 
 public class RecordCERT : Record
 {
-    public byte[] RDATA { get; set; }
     public ushort TYPE { get; set; }
     public ushort KEYTAG { get; set; }  //Format
     public byte ALGORITHM { get; set; }
@@ -27,7 +26,6 @@ public class RecordCERT : Record
     {
         // re-read length
         var RDLENGTH = rr.ReadUInt16(-2);
-        //RDATA = rr.ReadBytes(RDLENGTH);
 
         TYPE = rr.ReadUInt16();
         KEYTAG = rr.ReadUInt16();

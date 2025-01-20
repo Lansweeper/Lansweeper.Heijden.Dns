@@ -126,7 +126,7 @@ public sealed class Resolver : IDisposable
     /// <summary>
     /// Verbose messages from internal operations
     /// </summary>
-    public event VerboseEventHandler OnVerbose;
+    public event VerboseEventHandler? OnVerbose;
     public delegate void VerboseEventHandler(object sender, VerboseEventArgs e);
 
     public class VerboseEventArgs(string message) : EventArgs
@@ -504,29 +504,25 @@ public sealed class Resolver : IDisposable
         return [..list];
     } 
    
-    private IPHostEntry MakeEntry(string HostName)
+    private IPHostEntry MakeEntry(string hostName)
     {
-        var entry = new IPHostEntry { HostName = HostName };
+        var entry = new IPHostEntry { HostName = hostName };
 
-        var response = Query(HostName, QType.A, QClass.IN);
+        var response = Query(hostName, QType.A, QClass.IN);
 
         // fill AddressList and aliases
         var addresses = new HashSet<IPAddress>();
         var aliases = new HashSet<string>();
         foreach (var answerRR in response.Answers)
         {
-            if (answerRR.Type == Type.A)
+            if (answerRR.RECORD is RecordA recordA)
             {
-                // answerRR.RECORD.ToString() == (answerRR.RECORD as RecordA).Address
-                addresses.Add(IPAddress.Parse((answerRR.RECORD.ToString())));
+                addresses.Add(recordA.Address);
                 entry.HostName = answerRR.NAME;
             }
-            else
+            else if (answerRR.Type == Type.CNAME)
             {
-                if (answerRR.Type == Type.CNAME)
-                {
-                    aliases.Add(answerRR.NAME);
-                }
+                aliases.Add(answerRR.NAME);
             }
         }
         entry.AddressList = [..addresses];
