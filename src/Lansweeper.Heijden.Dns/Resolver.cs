@@ -17,693 +17,688 @@ using System.Net.NetworkInformation;
  *
  */
 
-namespace Heijden.DNS
+namespace Heijden.DNS;
+
+/// <summary>
+/// Resolver is the main class to do DNS query lookups
+/// </summary>
+public class Resolver
 {
-	/// <summary>
-	/// Resolver is the main class to do DNS query lookups
-	/// </summary>
-	public class Resolver
-	{
-		/// <summary>
-		/// Version of this set of routines, when not in a library
-		/// </summary>
-		public string Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+    /// <summary>
+    /// Version of this set of routines, when not in a library
+    /// </summary>
+    public string Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-		/// <summary>
-		/// Default DNS port
-		/// </summary>
-		public const int DefaultPort = 53;
+    /// <summary>
+    /// Default DNS port
+    /// </summary>
+    public const int DefaultPort = 53;
 
-		/// <summary>
-		/// Gets list of OPENDNS servers
-		/// </summary>
-		public static readonly IPEndPoint[] DefaultDnsServers = 
-			{ 
-				new IPEndPoint(IPAddress.Parse("208.67.222.222"), DefaultPort), 
-				new IPEndPoint(IPAddress.Parse("208.67.220.220"), DefaultPort) 
-			};
+    /// <summary>
+    /// Gets list of OPENDNS servers
+    /// </summary>
+    public static readonly IPEndPoint[] DefaultDnsServers = 
+    { 
+        new IPEndPoint(IPAddress.Parse("208.67.222.222"), DefaultPort), 
+        new IPEndPoint(IPAddress.Parse("208.67.220.220"), DefaultPort) 
+    };
 
-		private ushort m_Unique;
-		private bool m_UseCache;
-		private int m_Retries;
+    private ushort m_Unique;
+    private bool m_UseCache;
+    private int m_Retries;
 
-		private readonly List<IPEndPoint> m_DnsServers;
+    private readonly List<IPEndPoint> m_DnsServers;
 
-		private readonly Dictionary<string,Response> m_ResponseCache;
+    private readonly Dictionary<string,Response> m_ResponseCache;
 
-		/// <summary>
-		/// Constructor of Resolver using DNS servers specified.
-		/// </summary>
-		/// <param name="DnsServers">Set of DNS servers</param>
-		public Resolver(IPEndPoint[] DnsServers)
-		{
-			m_ResponseCache = new Dictionary<string, Response>();
-			m_DnsServers = new List<IPEndPoint>();
-			m_DnsServers.AddRange(DnsServers);
+    /// <summary>
+    /// Constructor of Resolver using DNS servers specified.
+    /// </summary>
+    /// <param name="DnsServers">Set of DNS servers</param>
+    public Resolver(IPEndPoint[] DnsServers)
+    {
+        m_ResponseCache = new Dictionary<string, Response>();
+        m_DnsServers = new List<IPEndPoint>();
+        m_DnsServers.AddRange(DnsServers);
 
-			m_Unique = (ushort)(new Random()).Next();
-			m_Retries = 3;
-			TimeOut = 1000;
-			Recursion = true;
-			m_UseCache = true;
-			TransportType = TransportType.Udp;
-		}
+        m_Unique = (ushort)(new Random()).Next();
+        m_Retries = 3;
+        TimeOut = 1000;
+        Recursion = true;
+        m_UseCache = true;
+        TransportType = TransportType.Udp;
+    }
 
-		/// <summary>
-		/// Constructor of Resolver using DNS server specified.
-		/// </summary>
-		/// <param name="DnsServer">DNS server to use</param>
-		public Resolver(IPEndPoint DnsServer)
-			: this(new IPEndPoint[] { DnsServer })
-		{
-		}
+    /// <summary>
+    /// Constructor of Resolver using DNS server specified.
+    /// </summary>
+    /// <param name="DnsServer">DNS server to use</param>
+    public Resolver(IPEndPoint DnsServer)
+        : this(new IPEndPoint[] { DnsServer })
+    {
+    }
 
-		/// <summary>
-		/// Constructor of Resolver using DNS server and port specified.
-		/// </summary>
-		/// <param name="ServerIpAddress">DNS server to use</param>
-		/// <param name="ServerPortNumber">DNS port to use</param>
-		public Resolver(IPAddress ServerIpAddress, int ServerPortNumber)
-			: this(new IPEndPoint(ServerIpAddress,ServerPortNumber))
-		{
-		}
+    /// <summary>
+    /// Constructor of Resolver using DNS server and port specified.
+    /// </summary>
+    /// <param name="ServerIpAddress">DNS server to use</param>
+    /// <param name="ServerPortNumber">DNS port to use</param>
+    public Resolver(IPAddress ServerIpAddress, int ServerPortNumber)
+        : this(new IPEndPoint(ServerIpAddress,ServerPortNumber))
+    {
+    }
 
-		/// <summary>
-		/// Constructor of Resolver using DNS address and port specified.
-		/// </summary>
-		/// <param name="ServerIpAddress">DNS server address to use</param>
-		/// <param name="ServerPortNumber">DNS port to use</param>
-		public Resolver(string ServerIpAddress, int ServerPortNumber)
-			: this(IPAddress.Parse(ServerIpAddress), ServerPortNumber)
-		{
-		}
+    /// <summary>
+    /// Constructor of Resolver using DNS address and port specified.
+    /// </summary>
+    /// <param name="ServerIpAddress">DNS server address to use</param>
+    /// <param name="ServerPortNumber">DNS port to use</param>
+    public Resolver(string ServerIpAddress, int ServerPortNumber)
+        : this(IPAddress.Parse(ServerIpAddress), ServerPortNumber)
+    {
+    }
 		
-		/// <summary>
-		/// Constructor of Resolver using DNS address.
-		/// </summary>
-		/// <param name="ServerIpAddress">DNS server address to use</param>
-		public Resolver(string ServerIpAddress)
-			: this(IPAddress.Parse(ServerIpAddress), DefaultPort)
-		{
-		}
+    /// <summary>
+    /// Constructor of Resolver using DNS address.
+    /// </summary>
+    /// <param name="ServerIpAddress">DNS server address to use</param>
+    public Resolver(string ServerIpAddress)
+        : this(IPAddress.Parse(ServerIpAddress), DefaultPort)
+    {
+    }
 
-		/// <summary>
-		/// Resolver constructor, using DNS servers specified by Windows
-		/// </summary>
-		public Resolver()
-			: this(GetDnsServers())
-		{
-		}
+    /// <summary>
+    /// Resolver constructor, using DNS servers specified by Windows
+    /// </summary>
+    public Resolver()
+        : this(GetDnsServers())
+    {
+    }
 
-		public class VerboseOutputEventArgs : EventArgs
-		{
-			public string Message;
-			public VerboseOutputEventArgs(string Message)
-			{
-				this.Message = Message;
-			}
-		}
-
-		private void Verbose(string format, params object[] args)
-		{
-			if (OnVerbose != null)
-				OnVerbose(this, new VerboseEventArgs(string.Format(format, args)));
-		}
-
-		/// <summary>
-		/// Verbose messages from internal operations
-		/// </summary>
-		public event VerboseEventHandler OnVerbose;
-		public delegate void VerboseEventHandler(object sender, VerboseEventArgs e);
-
-		public class VerboseEventArgs : EventArgs
-		{
-			public string Message;
-			public VerboseEventArgs(string Message)
-			{
-				this.Message = Message;
-			}
-		}
-
-
-		/// <summary>
-		/// Gets or sets timeout in milliseconds
-		/// </summary>
-		public int TimeOut { get; set; }
-
-		/// <summary>
-		/// Gets or sets number of retries before giving up
-		/// </summary>
-		public int Retries
-		{
-			get
-			{
-				return m_Retries;
-			}
-			set
-			{
-				if(value>=1)
-					m_Retries = value;
-			}
-		}
-
-		/// <summary>
-		/// Gets or set recursion for doing queries
-		/// </summary>
-		public bool Recursion { get; set; }
-
-		/// <summary>
-		/// Gets or sets protocol to use
-		/// </summary>
-		public TransportType TransportType { get; set; }
-
-		/// <summary>
-		/// Gets or sets list of DNS servers to use
-		/// </summary>
-		public IPEndPoint[] DnsServers
-		{
-			get
-			{
-				return m_DnsServers.ToArray();
-			}
-			set
-			{
-				m_DnsServers.Clear();
-				m_DnsServers.AddRange(value);
-			}
-		}
-
-		/// <summary>
-		/// Gets first DNS server address or sets single DNS server to use
-		/// </summary>
-		public string DnsServer
-		{
-			get
-			{
-				return m_DnsServers[0].Address.ToString();
-			}
-			set
-			{
-				IPAddress ip;
-				if (IPAddress.TryParse(value, out ip))
-				{
-					m_DnsServers.Clear();
-					m_DnsServers.Add(new IPEndPoint(ip, DefaultPort));
-					return;
-				}
-				Response response = Query(value, QType.A);
-				if (response.RecordsA.Length > 0)
-				{
-					m_DnsServers.Clear();
-					m_DnsServers.Add(new IPEndPoint(response.RecordsA[0].Address, DefaultPort));
-				}
-			}
-		}
-
-
-		public bool UseCache
-		{
-			get
-			{
-				return m_UseCache;
-			}
-			set
-			{
-				m_UseCache = value;
-				if (!m_UseCache)
-					m_ResponseCache.Clear();
-			}
-		}
-
-		/// <summary>
-		/// Clear the resolver cache
-		/// </summary>
-		public void ClearCache()
-		{
-			m_ResponseCache.Clear();
-		}
-
-		private Response? SearchInCache(Question question)
-		{
-			if (!m_UseCache)
-				return null;
-
-			string strKey = question.QClass + "-" + question.QType + "-" + question.QName;
-
-			Response response = null;
-
-			lock (m_ResponseCache)
-			{
-				if (!m_ResponseCache.ContainsKey(strKey))
-					return null;
-
-				response = m_ResponseCache[strKey];
-			}
-
-			int TimeLived = (int)((DateTime.Now.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
-			foreach (RR rr in response.RecordsRR)
-			{
-				rr.TimeLived = TimeLived;
-				// The TTL property calculates its actual time to live
-				if (rr.TTL == 0)
-					return null; // out of date
-			}
-			return response;
-		}
-
-		private void AddToCache(Response response)
-		{
-			if (!m_UseCache)
-				return;
-
-			// No question, no caching
-			if (response.Questions.Count == 0)
-				return;
-
-			// Only cached non-error responses
-			if (response.header.RCODE != RCode.NoError)
-				return;
-
-			Question question = response.Questions[0];
-
-			string strKey = question.QClass + "-" + question.QType + "-" + question.QName;
-
-			lock (m_ResponseCache)
-			{
-				if (m_ResponseCache.ContainsKey(strKey))
-					m_ResponseCache.Remove(strKey);
-
-				m_ResponseCache.Add(strKey, response);
-			}
-		}
-
-        private Response UdpRequest(Request request)
+    public class VerboseOutputEventArgs : EventArgs
+    {
+        public string Message;
+        public VerboseOutputEventArgs(string Message)
         {
-            for (var intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+            this.Message = Message;
+        }
+    }
+
+    private void Verbose(string format, params object[] args)
+    {
+        if (OnVerbose != null)
+            OnVerbose(this, new VerboseEventArgs(string.Format(format, args)));
+    }
+
+    /// <summary>
+    /// Verbose messages from internal operations
+    /// </summary>
+    public event VerboseEventHandler OnVerbose;
+    public delegate void VerboseEventHandler(object sender, VerboseEventArgs e);
+
+    public class VerboseEventArgs : EventArgs
+    {
+        public string Message;
+        public VerboseEventArgs(string Message)
+        {
+            this.Message = Message;
+        }
+    }
+
+
+    /// <summary>
+    /// Gets or sets timeout in milliseconds
+    /// </summary>
+    public int TimeOut { get; set; }
+
+    /// <summary>
+    /// Gets or sets number of retries before giving up
+    /// </summary>
+    public int Retries
+    {
+        get
+        {
+            return m_Retries;
+        }
+        set
+        {
+            if(value>=1)
+                m_Retries = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or set recursion for doing queries
+    /// </summary>
+    public bool Recursion { get; set; }
+
+    /// <summary>
+    /// Gets or sets protocol to use
+    /// </summary>
+    public TransportType TransportType { get; set; }
+
+    /// <summary>
+    /// Gets or sets list of DNS servers to use
+    /// </summary>
+    public IPEndPoint[] DnsServers
+    {
+        get
+        {
+            return m_DnsServers.ToArray();
+        }
+        set
+        {
+            m_DnsServers.Clear();
+            m_DnsServers.AddRange(value);
+        }
+    }
+
+    /// <summary>
+    /// Gets first DNS server address or sets single DNS server to use
+    /// </summary>
+    public string DnsServer
+    {
+        get
+        {
+            return m_DnsServers[0].Address.ToString();
+        }
+        set
+        {
+            IPAddress ip;
+            if (IPAddress.TryParse(value, out ip))
             {
-                for (var intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
-                {
-                    var endpoint = m_DnsServers[intDnsServer];
-                    using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
-                    udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
-
-                    try
-                    {
-                        udpClient.Send(request.Data);
-                        var result = udpClient.Receive(ref endpoint);
-                        var response = new Response(endpoint, result);
-                        AddToCache(response);
-                        return response;
-                    }
-                    catch (SocketException)
-                    {
-                        Verbose($";; Connection to nameserver {intDnsServer + 1} failed");
-                        continue; // next try
-                    }
-                    finally
-                    {
-                        m_Unique++;
-                        // close the connection
-                        udpClient.Close();
-                    }
-                }
+                m_DnsServers.Clear();
+                m_DnsServers.Add(new IPEndPoint(ip, DefaultPort));
+                return;
             }
+            Response response = Query(value, QType.A);
+            if (response.RecordsA.Length > 0)
+            {
+                m_DnsServers.Clear();
+                m_DnsServers.Add(new IPEndPoint(response.RecordsA[0].Address, DefaultPort));
+            }
+        }
+    }
 
-            return new Response { Error = "Timeout Error" };
+
+    public bool UseCache
+    {
+        get
+        {
+            return m_UseCache;
+        }
+        set
+        {
+            m_UseCache = value;
+            if (!m_UseCache)
+                m_ResponseCache.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Clear the resolver cache
+    /// </summary>
+    public void ClearCache()
+    {
+        m_ResponseCache.Clear();
+    }
+
+    private Response? SearchInCache(Question question)
+    {
+        if (!m_UseCache)
+            return null;
+
+        var strKey = $"{question.QClass}-{question.QType}-{question.QName}";
+
+        Response? response = null;
+
+        lock (m_ResponseCache)
+        {
+            if (m_ResponseCache.TryGetValue(strKey, out var value))
+            {
+                response = value;
+            }
+            else
+            {
+                return null;
+            }
         }
 
-		private Response TcpRequest(Request request)
-		{
-			//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-			//sw.Start();
+        var timeLived = (int)((DateTime.Now.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
+        foreach (var rr in response.RecordsRR)
+        {
+            rr.TimeLived = timeLived;
+            // The TTL property calculates its actual time to live
+            if (rr.TTL == 0)
+                return null; // out of date
+        }
+        return response;
+    }
 
-			for (int intAttempts = 0; intAttempts < m_Retries; intAttempts++)
-			{
-				for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
-				{
-					using (var tcpClient = new TcpClient())
-					{
-						tcpClient.ReceiveTimeout = TimeOut;
+    private void AddToCache(Response response)
+    {
+        if (!m_UseCache)
+            return;
 
-						try
-						{
-							IAsyncResult result = tcpClient.BeginConnect(m_DnsServers[intDnsServer].Address, m_DnsServers[intDnsServer].Port, null, null);
+        // No question, no caching
+        if (response.Questions.Count == 0)
+            return;
 
-							bool success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
+        // Only cached non-error responses
+        if (response.header.RCODE != RCode.NoError)
+            return;
 
-							if (!success || !tcpClient.Connected)
-							{
-								tcpClient.Close();
-								Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-								continue;
-							}
+        Question question = response.Questions[0];
 
-							using (BufferedStream bs = new BufferedStream(tcpClient.GetStream()))
-							{
-								byte[] data = request.Data;
-								bs.WriteByte((byte)((data.Length >> 8) & 0xff));
-								bs.WriteByte((byte)(data.Length & 0xff));
-								bs.Write(data, 0, data.Length);
-								bs.Flush();
+        string strKey = question.QClass + "-" + question.QType + "-" + question.QName;
 
-								Response TransferResponse = new Response();
-								int intSoa = 0;
-								int intMessageSize = 0;
+        lock (m_ResponseCache)
+        {
+            m_ResponseCache.Remove(strKey);
+            m_ResponseCache.Add(strKey, response);
+        }
+    }
 
-								//Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
+    private Response UdpRequest(Request request)
+    {
+        for (var intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+        {
+            for (var intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
+            {
+                var endpoint = m_DnsServers[intDnsServer];
+                using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
+                udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
 
-								while (true)
-								{
-									int intLength = bs.ReadByte() << 8 | bs.ReadByte();
-									if (intLength <= 0)
-									{
-										tcpClient.Close();
-										Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
-										throw new SocketException(); // next try
-									}
+                try
+                {
+                    udpClient.Send(request.GetData());
+                    var result = udpClient.Receive(ref endpoint);
+                    var response = new Response(endpoint, result);
+                    AddToCache(response);
+                    return response;
+                }
+                catch (SocketException)
+                {
+                    Verbose($";; Connection to nameserver {intDnsServer + 1} failed");
+                    continue; // next try
+                }
+                finally
+                {
+                    m_Unique++;
+                    // close the connection
+                    udpClient.Close();
+                }
+            }
+        }
 
-									intMessageSize += intLength;
+        return new Response { Error = "Timeout Error" };
+    }
 
-									data = new byte[intLength];
-									bs.Read(data, 0, intLength);
-									Response response = new Response(m_DnsServers[intDnsServer], data);
+    private Response TcpRequest(Request request)
+    {
+        //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        //sw.Start();
 
-									//Debug.WriteLine("Received "+ (intLength+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
+        for (int intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+        {
+            for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
+            {
+                using var tcpClient = new TcpClient();
+                tcpClient.ReceiveTimeout = TimeOut;
 
-									if (response.header.RCODE != RCode.NoError)
-										return response;
+                try
+                {
+                    IAsyncResult result = tcpClient.BeginConnect(m_DnsServers[intDnsServer].Address, m_DnsServers[intDnsServer].Port, null, null);
 
-									if (response.Questions[0].QType != QType.AXFR)
-									{
-										AddToCache(response);
-										return response;
-									}
+                    bool success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
 
-									// Zone transfer!!
+                    if (!success || !tcpClient.Connected)
+                    {
+                        tcpClient.Close();
+                        Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+                        continue;
+                    }
 
-									if(TransferResponse.Questions.Count==0)
-										TransferResponse.Questions.AddRange(response.Questions);
-									TransferResponse.Answers.AddRange(response.Answers);
-									TransferResponse.Authorities.AddRange(response.Authorities);
-									TransferResponse.Additionals.AddRange(response.Additionals);
+                    using var bs = new BufferedStream(tcpClient.GetStream());
+                    var data = request.GetData();
+                    bs.WriteByte((byte)((data.Length >> 8) & 0xff));
+                    bs.WriteByte((byte)(data.Length & 0xff));
+                    bs.Write(data, 0, data.Length);
+                    bs.Flush();
 
-									if (response.Answers[0].Type == Type.SOA)
-										intSoa++;
+                    var TransferResponse = new Response();
+                    int intSoa = 0;
+                    int intMessageSize = 0;
 
-									if (intSoa == 2)
-									{
-										TransferResponse.header.QDCOUNT = (ushort)TransferResponse.Questions.Count;
-										TransferResponse.header.ANCOUNT = (ushort)TransferResponse.Answers.Count;
-										TransferResponse.header.NSCOUNT = (ushort)TransferResponse.Authorities.Count;
-										TransferResponse.header.ARCOUNT = (ushort)TransferResponse.Additionals.Count;
-										TransferResponse.MessageSize = intMessageSize;
-										return TransferResponse;
-									}
-								}
-							}
-						} // try
-						catch (SocketException)
-						{
-							continue; // next try
-						}
-						finally
-						{
-							m_Unique++;
+                    //Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
 
-							// close the socket
-							tcpClient.Close();
-						}
-					}
-				}
-			}
-			return new Response { Error = "Timeout Error" };
-		}
+                    while (true)
+                    {
+                        int intLength = bs.ReadByte() << 8 | bs.ReadByte();
+                        if (intLength <= 0)
+                        {
+                            tcpClient.Close();
+                            Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+                            throw new SocketException(); // next try
+                        }
 
-		/// <summary>
-		/// Do Query on specified DNS servers
-		/// </summary>
-		/// <param name="name">Name to query</param>
-		/// <param name="qtype">Question type</param>
-		/// <param name="qclass">Class type</param>
-		/// <returns>Response of the query</returns>
-		public Response Query(string name, QType qtype, QClass qclass)
-		{
-			Question question = new Question(name, qtype, qclass);
-			Response response = SearchInCache(question);
-			if (response != null)
-				return response;
+                        intMessageSize += intLength;
 
-			Request request = new Request();
-			request.AddQuestion(question);
-			return GetResponse(request);
-		}
+                        data = new byte[intLength];
+                        bs.Read(data, 0, intLength);
+                        Response response = new Response(m_DnsServers[intDnsServer], data);
 
-		/// <summary>
-		/// Do an QClass=IN Query on specified DNS servers
-		/// </summary>
-		/// <param name="name">Name to query</param>
-		/// <param name="qtype">Question type</param>
-		/// <returns>Response of the query</returns>
-		public Response Query(string name, QType qtype)
-		{
-			Question question = new Question(name, qtype, QClass.IN);
-			Response response = SearchInCache(question);
-			if (response != null)
-				return response;
+                        //Debug.WriteLine("Received "+ (intLength+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
 
-			Request request = new Request();
-			request.AddQuestion(question);
-			return GetResponse(request);
-		}
+                        if (response.header.RCODE != RCode.NoError)
+                            return response;
 
-		private Response GetResponse(Request request)
-		{
-			request.Header.ID = m_Unique;
-			request.Header.RD = Recursion;
+                        if (response.Questions[0].QType != QType.AXFR)
+                        {
+                            AddToCache(response);
+                            return response;
+                        }
 
-			if (TransportType == TransportType.Udp)
-				return UdpRequest(request);
+                        // Zone transfer!!
 
-			if (TransportType == TransportType.Tcp)
-				return TcpRequest(request);
+                        if(TransferResponse.Questions.Count==0)
+                            TransferResponse.Questions.AddRange(response.Questions);
+                        TransferResponse.Answers.AddRange(response.Answers);
+                        TransferResponse.Authorities.AddRange(response.Authorities);
+                        TransferResponse.Additionals.AddRange(response.Additionals);
 
-			Response response = new Response();
-			response.Error = "Unknown TransportType";
-			return response;
-		}
+                        if (response.Answers[0].Type == Type.SOA)
+                            intSoa++;
 
-		/// <summary>
-		/// Gets a list of default DNS servers used on the Windows machine.
-		/// </summary>
-		/// <returns></returns>
-		public static IPEndPoint[] GetDnsServers()
-		{
-			List<IPEndPoint> list = new List<IPEndPoint>();
+                        if (intSoa == 2)
+                        {
+                            TransferResponse.header.QDCOUNT = (ushort)TransferResponse.Questions.Count;
+                            TransferResponse.header.ANCOUNT = (ushort)TransferResponse.Answers.Count;
+                            TransferResponse.header.NSCOUNT = (ushort)TransferResponse.Authorities.Count;
+                            TransferResponse.header.ARCOUNT = (ushort)TransferResponse.Additionals.Count;
+                            TransferResponse.MessageSize = intMessageSize;
+                            return TransferResponse;
+                        }
+                    }
+                } // try
+                catch (SocketException)
+                {
+                    continue; // next try
+                }
+                finally
+                {
+                    m_Unique++;
 
-			NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
-			foreach (NetworkInterface n in adapters)
-			{
-				if (n.OperationalStatus == OperationalStatus.Up)
-				{
-					IPInterfaceProperties ipProps = n.GetIPProperties();
-					// thanks to Jon Webster on May 20, 2008
-					foreach (IPAddress ipAddr in ipProps.DnsAddresses)
-					{
-						IPEndPoint entry = new IPEndPoint(ipAddr, DefaultPort);
-						if (!list.Contains(entry))
-							list.Add(entry);
-					}
+                    // close the socket
+                    tcpClient.Close();
+                }
+            }
+        }
+        return new Response { Error = "Timeout Error" };
+    }
 
-				}
-			}
-			return list.ToArray();
-		} 
+    /// <summary>
+    /// Do Query on specified DNS servers
+    /// </summary>
+    /// <param name="name">Name to query</param>
+    /// <param name="qtype">Question type</param>
+    /// <param name="qclass">Class type</param>
+    /// <returns>Response of the query</returns>
+    public Response Query(string name, QType qtype, QClass qclass)
+    {
+        Question question = new Question(name, qtype, qclass);
+        Response response = SearchInCache(question);
+        if (response != null)
+            return response;
 
+        Request request = new Request();
+        request.AddQuestion(question);
+        return GetResponse(request);
+    }
 
-		//
+    /// <summary>
+    /// Do an QClass=IN Query on specified DNS servers
+    /// </summary>
+    /// <param name="name">Name to query</param>
+    /// <param name="qtype">Question type</param>
+    /// <returns>Response of the query</returns>
+    public Response Query(string name, QType qtype)
+    {
+        Question question = new Question(name, qtype, QClass.IN);
+        Response response = SearchInCache(question);
+        if (response != null)
+            return response;
 
-		private IPHostEntry MakeEntry(string HostName)
-		{
-			IPHostEntry entry = new IPHostEntry();
+        Request request = new Request();
+        request.AddQuestion(question);
+        return GetResponse(request);
+    }
 
-			entry.HostName = HostName;
+    private Response GetResponse(Request request)
+    {
+        request.Header.ID = m_Unique;
+        request.Header.RD = Recursion;
 
-			Response response = Query(HostName, QType.A, QClass.IN);
+        if (TransportType == TransportType.Udp)
+            return UdpRequest(request);
 
-			// fill AddressList and aliases
-			List<IPAddress> AddressList = new List<IPAddress>();
-			List<string> Aliases = new List<string>();
-			foreach (AnswerRR answerRR in response.Answers)
-			{
-				if (answerRR.Type == Type.A)
-				{
-					// answerRR.RECORD.ToString() == (answerRR.RECORD as RecordA).Address
-					AddressList.Add(IPAddress.Parse((answerRR.RECORD.ToString())));
-					entry.HostName = answerRR.NAME;
-				}
-				else
-				{
-					if (answerRR.Type == Type.CNAME)
-						Aliases.Add(answerRR.NAME);
-				}
-			}
-			entry.AddressList = AddressList.ToArray();
-			entry.Aliases = Aliases.ToArray();
+        if (TransportType == TransportType.Tcp)
+            return TcpRequest(request);
 
-			return entry;
-		}
+        Response response = new Response();
+        response.Error = "Unknown TransportType";
+        return response;
+    }
 
-		/// <summary>
-		/// Translates the IPV4 or IPV6 address into an arpa address
-		/// </summary>
-		/// <param name="ip">IP address to get the arpa address form</param>
-		/// <returns>The 'mirrored' IPV4 or IPV6 arpa address</returns>
-		public static string GetArpaFromIp(IPAddress ip)
-		{
-			if (ip.AddressFamily == AddressFamily.InterNetwork)
-			{
-				StringBuilder sb = new StringBuilder();
-				sb.Append("in-addr.arpa.");
-				foreach (byte b in ip.GetAddressBytes())
-				{
-					sb.Insert(0, string.Format("{0}.", b));
-				}
-				return sb.ToString();
-			}
-			if (ip.AddressFamily == AddressFamily.InterNetworkV6)
-			{
-				StringBuilder sb = new StringBuilder();
-				sb.Append("ip6.arpa.");
-				foreach (byte b in ip.GetAddressBytes())
-				{
-					sb.Insert(0, string.Format("{0:x}.", (b >> 4) & 0xf));
-					sb.Insert(0, string.Format("{0:x}.", (b >> 0) & 0xf));
-				}
-				return sb.ToString();
-			}
-			return "?";
-		}
+    /// <summary>
+    /// Gets a list of default DNS servers used on the Windows machine.
+    /// </summary>
+    /// <returns></returns>
+    public static IPEndPoint[] GetDnsServers()
+    {
+        List<IPEndPoint> list = new List<IPEndPoint>();
 
-		public static string GetArpaFromEnum(string strEnum)
-		{
-			StringBuilder sb = new StringBuilder();
-			string Number = System.Text.RegularExpressions.Regex.Replace(strEnum, "[^0-9]", "");
-			sb.Append("e164.arpa.");
-			foreach (char c in Number)
-			{
-				sb.Insert(0, string.Format("{0}.", c));
-			}
-			return sb.ToString();
-		}
+        NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
+        foreach (NetworkInterface n in adapters)
+        {
+            if (n.OperationalStatus == OperationalStatus.Up)
+            {
+                IPInterfaceProperties ipProps = n.GetIPProperties();
+                // thanks to Jon Webster on May 20, 2008
+                foreach (IPAddress ipAddr in ipProps.DnsAddresses)
+                {
+                    IPEndPoint entry = new IPEndPoint(ipAddr, DefaultPort);
+                    if (!list.Contains(entry))
+                        list.Add(entry);
+                }
+
+            }
+        }
+        return list.ToArray();
+    } 
 
 
-		/// <summary>
-		///		Resolves an IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="ip">An IP address.</param>
-		/// <returns>
-		///		An System.Net.IPHostEntry instance that contains address information about
-		///		the host specified in address.
-		///</returns>
-		public IPHostEntry GetHostEntry(IPAddress ip)
-		{
-			Response response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
-			if (response.RecordsPTR.Length > 0)
-				return MakeEntry(response.RecordsPTR[0].PTRDNAME);
-			else
-				return new IPHostEntry();
-		}
+    //
 
-		/// <summary>
-		///		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
-		/// </summary>
-		/// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-		/// <returns>
-		///		An System.Net.IPHostEntry instance that contains address information about
-		///		the host specified in hostNameOrAddress. 
-		///</returns>
-		public IPHostEntry GetHostEntry(string hostNameOrAddress)
-		{
-			IPAddress iPAddress;
-			if (IPAddress.TryParse(hostNameOrAddress, out iPAddress))
-				return GetHostEntry(iPAddress);
-			else
-				return MakeEntry(hostNameOrAddress);
-		}
+    private IPHostEntry MakeEntry(string HostName)
+    {
+        IPHostEntry entry = new IPHostEntry();
+
+        entry.HostName = HostName;
+
+        Response response = Query(HostName, QType.A, QClass.IN);
+
+        // fill AddressList and aliases
+        List<IPAddress> AddressList = new List<IPAddress>();
+        List<string> Aliases = new List<string>();
+        foreach (AnswerRR answerRR in response.Answers)
+        {
+            if (answerRR.Type == Type.A)
+            {
+                // answerRR.RECORD.ToString() == (answerRR.RECORD as RecordA).Address
+                AddressList.Add(IPAddress.Parse((answerRR.RECORD.ToString())));
+                entry.HostName = answerRR.NAME;
+            }
+            else
+            {
+                if (answerRR.Type == Type.CNAME)
+                    Aliases.Add(answerRR.NAME);
+            }
+        }
+        entry.AddressList = AddressList.ToArray();
+        entry.Aliases = Aliases.ToArray();
+
+        return entry;
+    }
+
+    /// <summary>
+    /// Translates the IPV4 or IPV6 address into an arpa address
+    /// </summary>
+    /// <param name="ip">IP address to get the arpa address form</param>
+    /// <returns>The 'mirrored' IPV4 or IPV6 arpa address</returns>
+    public static string GetArpaFromIp(IPAddress ip)
+    {
+        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("in-addr.arpa.");
+            foreach (byte b in ip.GetAddressBytes())
+            {
+                sb.Insert(0, string.Format("{0}.", b));
+            }
+            return sb.ToString();
+        }
+        if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("ip6.arpa.");
+            foreach (byte b in ip.GetAddressBytes())
+            {
+                sb.Insert(0, string.Format("{0:x}.", (b >> 4) & 0xf));
+                sb.Insert(0, string.Format("{0:x}.", (b >> 0) & 0xf));
+            }
+            return sb.ToString();
+        }
+        return "?";
+    }
+
+    public static string GetArpaFromEnum(string strEnum)
+    {
+        StringBuilder sb = new StringBuilder();
+        string Number = System.Text.RegularExpressions.Regex.Replace(strEnum, "[^0-9]", "");
+        sb.Append("e164.arpa.");
+        foreach (char c in Number)
+        {
+            sb.Insert(0, string.Format("{0}.", c));
+        }
+        return sb.ToString();
+    }
 
 
-		private enum RRRecordStatus
-		{
-			UNKNOWN,
-			NAME,
-			TTL,
-			CLASS,
-			TYPE,
-			VALUE
-		}
+    /// <summary>
+    ///		Resolves an IP address to an System.Net.IPHostEntry instance.
+    /// </summary>
+    /// <param name="ip">An IP address.</param>
+    /// <returns>
+    ///		An System.Net.IPHostEntry instance that contains address information about
+    ///		the host specified in address.
+    ///</returns>
+    public IPHostEntry GetHostEntry(IPAddress ip)
+    {
+        Response response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
+        if (response.RecordsPTR.Length > 0)
+            return MakeEntry(response.RecordsPTR[0].PTRDNAME);
+        else
+            return new IPHostEntry();
+    }
 
-		public void LoadRootFile(string strPath)
-		{
-			using (StreamReader sr = new StreamReader(strPath))
-			{
-				while (!sr.EndOfStream)
-				{
-					string strLine = sr.ReadLine();
-					if (strLine == null)
-						break;
-					int intI = strLine.IndexOf(';');
-					if (intI >= 0)
-						strLine = strLine.Substring(0, intI);
-					strLine = strLine.Trim();
-					if (strLine.Length == 0)
-						continue;
-					RRRecordStatus status = RRRecordStatus.NAME;
-					string Name="";
-					string Ttl="";
-					string Class="";
-					string Type="";
-					string Value="";
-					string strW = "";
-					for (intI = 0; intI < strLine.Length; intI++)
-					{
-						char C = strLine[intI];
+    /// <summary>
+    ///		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
+    /// </summary>
+    /// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
+    /// <returns>
+    ///		An System.Net.IPHostEntry instance that contains address information about
+    ///		the host specified in hostNameOrAddress. 
+    ///</returns>
+    public IPHostEntry GetHostEntry(string hostNameOrAddress)
+    {
+        IPAddress iPAddress;
+        if (IPAddress.TryParse(hostNameOrAddress, out iPAddress))
+            return GetHostEntry(iPAddress);
+        else
+            return MakeEntry(hostNameOrAddress);
+    }
 
-						if (C <= ' ' && strW!="")
-						{
-							switch (status)
-							{
-								case RRRecordStatus.NAME:
-									Name = strW;
-									status = RRRecordStatus.TTL;
-									break;
-								case RRRecordStatus.TTL:
-									Ttl = strW;
-									status = RRRecordStatus.CLASS;
-									break;
-								case RRRecordStatus.CLASS:
-									Class = strW;
-									status = RRRecordStatus.TYPE;
-									break;
-								case RRRecordStatus.TYPE:
-									Type = strW;
-									status = RRRecordStatus.VALUE;
-									break;
-								case RRRecordStatus.VALUE:
-									Value = strW;
-									status = RRRecordStatus.UNKNOWN;
-									break;
-								default:
-									break;
-							}
-							strW = "";
-						}
-						if (C > ' ')
-							strW += C;
-					}
 
-				}
-				sr.Close();
-			}
-		}
-	} // class
-}
+    private enum RRRecordStatus
+    {
+        UNKNOWN,
+        NAME,
+        TTL,
+        CLASS,
+        TYPE,
+        VALUE
+    }
+
+    public void LoadRootFile(string strPath)
+    {
+        using var sr = new StreamReader(strPath);
+        while (!sr.EndOfStream)
+        {
+            string strLine = sr.ReadLine();
+            if (strLine == null)
+                break;
+            int intI = strLine.IndexOf(';');
+            if (intI >= 0)
+                strLine = strLine.Substring(0, intI);
+            strLine = strLine.Trim();
+            if (strLine.Length == 0)
+                continue;
+            RRRecordStatus status = RRRecordStatus.NAME;
+            string Name="";
+            string Ttl="";
+            string Class="";
+            string Type="";
+            string Value="";
+            string strW = "";
+            for (intI = 0; intI < strLine.Length; intI++)
+            {
+                char C = strLine[intI];
+
+                if (C <= ' ' && strW!="")
+                {
+                    switch (status)
+                    {
+                        case RRRecordStatus.NAME:
+                            Name = strW;
+                            status = RRRecordStatus.TTL;
+                            break;
+                        case RRRecordStatus.TTL:
+                            Ttl = strW;
+                            status = RRRecordStatus.CLASS;
+                            break;
+                        case RRRecordStatus.CLASS:
+                            Class = strW;
+                            status = RRRecordStatus.TYPE;
+                            break;
+                        case RRRecordStatus.TYPE:
+                            Type = strW;
+                            status = RRRecordStatus.VALUE;
+                            break;
+                        case RRRecordStatus.VALUE:
+                            Value = strW;
+                            status = RRRecordStatus.UNKNOWN;
+                            break;
+                        default:
+                            break;
+                    }
+                    strW = "";
+                }
+                if (C > ' ')
+                    strW += C;
+            }
+
+        }
+        sr.Close();
+    }
+} // class
