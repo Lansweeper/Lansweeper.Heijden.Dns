@@ -1,38 +1,31 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Heijden.DNS
 {
 	public class Request
 	{
-		public Header header;
+		public Header Header { get; } = new()
+        {
+            OPCODE = OPCode.Query,
+            QDCOUNT = 0
+        };
 
-		private List<Question> questions;
+		private List<Question> Questions { get; } = [];
 
-		public Request()
+        public void AddQuestion(Question question)
 		{
-			header = new Header();
-			header.OPCODE = OPCode.Query;
-			header.QDCOUNT = 0;
-
-			questions = new List<Question>();
-		}
-
-		public void AddQuestion(Question question)
-		{
-			questions.Add(question);
+			Questions.Add(question);
 		}
 
 		public byte[] Data
 		{
 			get
 			{
-				List<byte> data = new List<byte>();
-				header.QDCOUNT = (ushort)questions.Count;
-				data.AddRange(header.Data);
-				foreach (Question q in questions)
-					data.AddRange(q.Data);
+				var data = new List<byte>();
+				Header.QDCOUNT = (ushort)Questions.Count;
+				data.AddRange(Header.GetData());
+                foreach (var q in Questions)
+                {
+                    data.AddRange(q.Data);
+                }
 				return data.ToArray();
 			}
 		}

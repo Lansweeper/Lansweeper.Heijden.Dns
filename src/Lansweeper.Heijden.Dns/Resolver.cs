@@ -478,8 +478,8 @@ namespace Heijden.DNS
 
 		private Response GetResponse(Request request)
 		{
-			request.header.ID = m_Unique;
-			request.header.RD = Recursion;
+			request.Header.ID = m_Unique;
+			request.Header.RD = Recursion;
 
 			if (TransportType == TransportType.Udp)
 				return UdpRequest(request);
