@@ -139,7 +139,7 @@ public sealed class Resolver : IDisposable
     public int TimeOut { get; set; }
 
     /// <summary>
-    /// Gets or sets number of extra retries before giving up
+    /// Gets or sets number of extra attempts before giving up
     /// </summary>
     public byte Retries { get; set; }
 
@@ -186,12 +186,16 @@ public sealed class Resolver : IDisposable
                 _dnsServers.Add(new IPEndPoint(ip, DefaultPort));
                 return;
             }
-            var response = Query(value, QType.A);
-            var recordA = response.GetRecords<RecordA>().FirstOrDefault();
-            if (recordA is null) return;
 
-            _dnsServers.Clear();
-            _dnsServers.Add(new IPEndPoint(recordA.Address, DefaultPort));
+            Task.Factory.StartNew(async () =>
+            {
+                var response = await Query(value, QType.A);
+                var recordA = response.GetRecords<RecordA>().FirstOrDefault();
+                if (recordA is null) return;
+
+                _dnsServers.Clear();
+                _dnsServers.Add(new IPEndPoint(recordA.Address, DefaultPort));
+            });
         }
     }
 
@@ -286,21 +290,24 @@ public sealed class Resolver : IDisposable
         }
     }
 
-    private Response UdpRequest(Request request)
+    private async Task<Response> UdpRequest(Request request, CancellationToken cancellationToken)
     {
         for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
         {
             for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var endpoint = _dnsServers[intDnsServer];
                 using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
 
                 try
                 {
-                    udpClient.Send(request.GetData());
-                    var result = udpClient.Receive(ref endpoint);
-                    var response = new Response(endpoint, result);
+                    await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await udpClient.SendAsync(request.GetData(), ct), TimeOut, cancellationToken)
+                        .ConfigureAwait(false);
+                    var result = await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await udpClient.ReceiveAsync(ct), TimeOut, cancellationToken).ConfigureAwait(false);
+                    var response = new Response(endpoint, result.Buffer);
                     AddToCache(response);
                     return response;
                 }
@@ -321,34 +328,35 @@ public sealed class Resolver : IDisposable
         return new Response { Error = "Timeout Error" };
     }
 
-    private Response TcpRequest(Request request)
+    private async Task<Response> TcpRequest(Request request, CancellationToken cancellationToken)
     {
         for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
         {
             for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 using var tcpClient = new TcpClient();
                 tcpClient.ReceiveTimeout = TimeOut;
 
                 try
                 {
-                    var result = tcpClient.BeginConnect(_dnsServers[intDnsServer].Address, _dnsServers[intDnsServer].Port, null, null);
-
-                    var success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
-
-                    if (!success || !tcpClient.Connected)
+                    await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await tcpClient.ConnectAsync(_dnsServers[intDnsServer].Address, _dnsServers[intDnsServer].Port, ct), TimeOut, cancellationToken)
+                        .ConfigureAwait(false);
+                    
+                    if (!tcpClient.Connected)
                     {
                         tcpClient.Close();
                         Verbose($";; Connection to nameserver {(intDnsServer + 1)} failed");
                         continue;
                     }
 
-                    using var bs = new BufferedStream(tcpClient.GetStream());
+                    await using var bs = new BufferedStream(tcpClient.GetStream());
                     var data = request.GetData();
                     bs.WriteByte((byte)((data.Length >> 8) & 0xff));
                     bs.WriteByte((byte)(data.Length & 0xff));
-                    bs.Write(data, 0, data.Length);
-                    bs.Flush();
+                    await bs.WriteAsync(data.AsMemory(), cancellationToken).ConfigureAwait(false);
+                    await bs.FlushAsync(cancellationToken).ConfigureAwait(false);
 
                     var transferResponse = new Response();
                     var intSoa = 0;
@@ -369,7 +377,8 @@ public sealed class Resolver : IDisposable
                         intMessageSize += intLength;
 
                         data = new byte[intLength];
-                        var bytesRead = bs.Read(data, 0, intLength);
+                        var bytesRead = await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await bs.ReadAsync(data.AsMemory(), ct), TimeOut, cancellationToken)
+                                        .ConfigureAwait(false);
                         var response = new Response(_dnsServers[intDnsServer], data[..bytesRead]);
 
                         //Debug.WriteLine("Received "+ (bytesRead+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
@@ -433,8 +442,9 @@ public sealed class Resolver : IDisposable
     /// <param name="name">Name to query</param>
     /// <param name="qType">Question type</param>
     /// <param name="qClass">Class type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Response of the query</returns>
-    public Response Query(string name, QType qType, QClass qClass)
+    public async Task<Response> Query(string name, QType qType, QClass qClass, CancellationToken cancellationToken = default)
     {
         var question = new Question(name, qType, qClass);
         var response = SearchInCache(question);
@@ -445,7 +455,7 @@ public sealed class Resolver : IDisposable
 
         var request = new Request();
         request.AddQuestion(question);
-        return GetResponse(request);
+        return await GetResponse(request, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -453,8 +463,9 @@ public sealed class Resolver : IDisposable
     /// </summary>
     /// <param name="name">Name to query</param>
     /// <param name="qType">Question type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Response of the query</returns>
-    public Response Query(string name, QType qType)
+    public async Task<Response> Query(string name, QType qType, CancellationToken cancellationToken = default)
     {
         var question = new Question(name, qType, QClass.IN);
         var response = SearchInCache(question);
@@ -465,18 +476,18 @@ public sealed class Resolver : IDisposable
 
         var request = new Request();
         request.AddQuestion(question);
-        return GetResponse(request);
+        return await GetResponse(request, cancellationToken).ConfigureAwait(false);
     }
 
-    private Response GetResponse(Request request)
+    private async Task<Response> GetResponse(Request request, CancellationToken cancellationToken)
     {
         request.Header.ID = _unique;
         request.Header.RD = Recursion;
 
         return TransportType switch
         {
-            TransportType.Udp => UdpRequest(request),
-            TransportType.Tcp => TcpRequest(request),
+            TransportType.Udp => await UdpRequest(request, cancellationToken),
+            TransportType.Tcp => await TcpRequest(request, cancellationToken),
             _ => new Response { Error = "Unknown TransportType" }
         };
     }
@@ -503,11 +514,11 @@ public sealed class Resolver : IDisposable
         return [..list];
     } 
    
-    private IPHostEntry MakeEntry(string hostName)
+    private async Task<IPHostEntry> MakeEntry(string hostName, CancellationToken cancellationToken)
     {
         var entry = new IPHostEntry { HostName = hostName };
 
-        var response = Query(hostName, QType.A, QClass.IN);
+        var response = await Query(hostName, QType.A, QClass.IN, cancellationToken).ConfigureAwait(false);
 
         // fill AddressList and aliases
         var addresses = new HashSet<IPAddress>();
@@ -573,34 +584,38 @@ public sealed class Resolver : IDisposable
         return sb.ToString();
     }
 
-    /// <summary>
-    ///		Resolves an IP address to an System.Net.IPHostEntry instance.
-    /// </summary>
-    /// <param name="ip">An IP address.</param>
-    /// <returns>
-    ///		An System.Net.IPHostEntry instance that contains address information about
-    ///		the host specified in address.
-    ///</returns>
-    public IPHostEntry GetHostEntry(IPAddress ip)
+    ///  <summary>
+    /// 		Resolves an IP address to an System.Net.IPHostEntry instance.
+    ///  </summary>
+    ///  <param name="ip">An IP address.</param>
+    ///  <param name="cancellationToken">Cancellation token</param>
+    ///  <returns>
+    /// 		An System.Net.IPHostEntry instance that contains address information about
+    /// 		the host specified in address.
+    /// </returns>
+    public async Task<IPHostEntry> GetHostEntry(IPAddress ip, CancellationToken cancellationToken = default)
     {
-        var response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
+        var response = await Query(GetArpaFromIp(ip), QType.PTR, QClass.IN, cancellationToken).ConfigureAwait(false);
         var recordPTR = response.GetRecords<RecordPTR>().FirstOrDefault();
         return recordPTR is null 
             ? new IPHostEntry() 
-            : MakeEntry(recordPTR.PTRDNAME);
+            : await MakeEntry(recordPTR.PTRDNAME, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>
-    ///		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
-    /// </summary>
-    /// <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-    /// <returns>
-    ///		An System.Net.IPHostEntry instance that contains address information about
-    ///		the host specified in hostNameOrAddress. 
-    ///</returns>
-    public IPHostEntry GetHostEntry(string hostNameOrAddress)
+    ///  <summary>
+    /// 		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
+    ///  </summary>
+    ///  <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
+    ///  <param name="cancellationToken">Cancellation token</param>
+    ///  <returns>
+    /// 		An System.Net.IPHostEntry instance that contains address information about
+    /// 		the host specified in hostNameOrAddress. 
+    /// </returns>
+    public async Task<IPHostEntry> GetHostEntry(string hostNameOrAddress, CancellationToken cancellationToken = default)
     {
-        return IPAddress.TryParse(hostNameOrAddress, out var iPAddress) ? GetHostEntry(iPAddress) : MakeEntry(hostNameOrAddress);
+        return IPAddress.TryParse(hostNameOrAddress, out var iPAddress) 
+            ? await GetHostEntry(iPAddress, cancellationToken).ConfigureAwait(false)
+            : await MakeEntry(hostNameOrAddress, cancellationToken).ConfigureAwait(false);
     }
 
 

@@ -3,7 +3,7 @@ using System.Net;
 using TestConsoleApp;
 
 var client = new DnsSdClient(IPAddress.Parse("192.168.111.90"));
-var result = client.Query();
+var result = await client.Query();
 
 Console.WriteLine("TXT records");
 foreach (var txtRecord in result.TxtRecords)

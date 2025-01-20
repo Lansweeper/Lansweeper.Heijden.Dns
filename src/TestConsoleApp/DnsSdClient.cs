@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Lansweeper.Heijden.Dns;
 using Lansweeper.Heijden.Dns.Enums;
 
@@ -20,7 +22,7 @@ internal class DnsSdClient : IDisposable
         _client = new Resolver(endPoint);
     }
 
-    public DnsSdData Query(int timeOut = 2000, bool useCache = false, byte retries = 0)
+    public async Task<DnsSdData> Query(int timeOut = 2000, bool useCache = false, byte retries = 0, CancellationToken cancellationToken = default)
     {
         var details = new DnsSdData();
         var sb = new StringBuilder();
@@ -30,7 +32,7 @@ internal class DnsSdClient : IDisposable
             _client.Retries = retries;
             _client.UseCache = useCache;
 
-            var result = _client.Query("_services._dns-sd._udp.local", QType.PTR);
+            var result = await _client.Query("_services._dns-sd._udp.local", QType.PTR, cancellationToken).ConfigureAwait(false);
 
             if (result.Answers == null || result.Answers.Count == 0) return details;
 
@@ -38,7 +40,7 @@ internal class DnsSdClient : IDisposable
             {
                 sb.AppendLine(res.RECORD.ToString());
 
-                var detailres = _client.Query(res.RECORD.ToString(), QType.PTR);
+                var detailres = await _client.Query(res.RECORD.ToString(), QType.PTR).ConfigureAwait(false);
 
                 foreach (var resdet in detailres.Answers)
                 {
