@@ -1,9 +1,4 @@
-using System;
-using System.IO;
 using System.Net;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Heijden.DNS;
 
@@ -12,293 +7,101 @@ public class Response
     /// <summary>
     /// List of Question records
     /// </summary>
-    public List<Question> Questions;
+    public List<Question> Questions { get; set; } = [];
+
     /// <summary>
     /// List of AnswerRR records
     /// </summary>
-    public List<AnswerRR> Answers;
+    public List<AnswerRR> Answers { get; set; } = [];
+
     /// <summary>
     /// List of AuthorityRR records
     /// </summary>
-    public List<AuthorityRR> Authorities;
+    public List<AuthorityRR> Authorities { get; set; } = [];
+
     /// <summary>
     /// List of AdditionalRR records
     /// </summary>
-    public List<AdditionalRR> Additionals;
+    public List<AdditionalRR> Additionals { get; set; } = [];
 
-    public Header header;
+    public Header Header { get; set; }
 
     /// <summary>
     /// Error message, empty when no error
     /// </summary>
-    public string Error;
+    public string Error { get; set; } = string.Empty;
 
     /// <summary>
     /// The Size of the message
     /// </summary>
-    public int MessageSize;
+    public int MessageSize { get; set; }
 
     /// <summary>
     /// TimeStamp when cached
     /// </summary>
-    public DateTime TimeStamp;
+    public DateTime TimeStamp { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     /// Server which delivered this response
     /// </summary>
-    public IPEndPoint Server;
+    public IPEndPoint Server { get; set; }
 
     public Response()
     {
-        Questions = new List<Question>();
-        Answers = new List<AnswerRR>();
-        Authorities = new List<AuthorityRR>();
-        Additionals = new List<AdditionalRR>();
-
         Server = new IPEndPoint(0,0);
-        Error = "";
-        MessageSize = 0;
-        TimeStamp = DateTime.Now;
-        header = new Header();
+        Header = new Header();
     }
 
     public Response(IPEndPoint iPEndPoint, byte[] data)
     {
-        Error = "";
         Server = iPEndPoint;
-        TimeStamp = DateTime.Now;
         MessageSize = data.Length;
-        RecordReader rr = new RecordReader(data);
+        var rr = new RecordReader(data);
 
-        Questions = new List<Question>();
-        Answers = new List<AnswerRR>();
-        Authorities = new List<AuthorityRR>();
-        Additionals = new List<AdditionalRR>();
+        Header = new Header(rr);
 
-        header = new Header(rr);
-
-        for (int intI = 0; intI < header.QDCOUNT; intI++)
+        for (var intI = 0; intI < Header.QDCOUNT; intI++)
         {
             Questions.Add(new Question(rr));
         }
 
-        for (int intI = 0; intI < header.ANCOUNT; intI++)
+        for (var intI = 0; intI < Header.ANCOUNT; intI++)
         {
             Answers.Add(new AnswerRR(rr));
         }
 
-        for (int intI = 0; intI < header.NSCOUNT; intI++)
+        for (var intI = 0; intI < Header.NSCOUNT; intI++)
         {
             Authorities.Add(new AuthorityRR(rr));
         }
-        for (int intI = 0; intI < header.ARCOUNT; intI++)
+        for (var intI = 0; intI < Header.ARCOUNT; intI++)
         {
             Additionals.Add(new AdditionalRR(rr));
         }
     }
 
     /// <summary>
-    /// List of RecordMX in Response.Answers
+    /// List of records of the given type in Response.Answers
     /// </summary>
-    public RecordMX[] RecordsMX
+    public IEnumerable<T> GetRecords<T>()
+    where T: Record
     {
-        get
-        {
-            List<RecordMX> list = new List<RecordMX>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordMX record = answerRR.RECORD as RecordMX;
-                if(record!=null)
-                    list.Add(record);
-            }
-            list.Sort();
-            return list.ToArray();
-        }
+        return Answers.Select(x => x.RECORD).OfType<T>();
     }
 
-    /// <summary>
-    /// List of RecordTXT in Response.Answers
-    /// </summary>
-    public RecordTXT[] RecordsTXT
+    public IEnumerable<RR> GetRecordsRR()
     {
-        get
+        foreach (var rr in Answers)
         {
-            List<RecordTXT> list = new List<RecordTXT>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordTXT record = answerRR.RECORD as RecordTXT;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
+            yield return rr;
+        }
+        foreach (var rr in Authorities)
+        {
+            yield return rr;
+        }
+        foreach (var rr in Additionals)
+        {
+            yield return rr;
         }
     }
-
-    /// <summary>
-    /// List of RecordA in Response.Answers
-    /// </summary>
-    public RecordA[] RecordsA
-    {
-        get
-        {
-            List<RecordA> list = new List<RecordA>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordA record = answerRR.RECORD as RecordA;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordPTR in Response.Answers
-    /// </summary>
-    public RecordPTR[] RecordsPTR
-    {
-        get
-        {
-            List<RecordPTR> list = new List<RecordPTR>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordPTR record = answerRR.RECORD as RecordPTR;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordCNAME in Response.Answers
-    /// </summary>
-    public RecordCNAME[] RecordsCNAME
-    {
-        get
-        {
-            List<RecordCNAME> list = new List<RecordCNAME>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordCNAME record = answerRR.RECORD as RecordCNAME;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordAAAA in Response.Answers
-    /// </summary>
-    public RecordAAAA[] RecordsAAAA
-    {
-        get
-        {
-            List<RecordAAAA> list = new List<RecordAAAA>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordAAAA record = answerRR.RECORD as RecordAAAA;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordNS in Response.Answers
-    /// </summary>
-    public RecordNS[] RecordsNS
-    {
-        get
-        {
-            List<RecordNS> list = new List<RecordNS>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordNS record = answerRR.RECORD as RecordNS;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordSOA in Response.Answers
-    /// </summary>
-    public RecordSOA[] RecordsSOA
-    {
-        get
-        {
-            List<RecordSOA> list = new List<RecordSOA>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordSOA record = answerRR.RECORD as RecordSOA;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// List of RecordCERT in Response.Answers
-    /// </summary>
-    public RecordCERT[] RecordsCERT
-    {
-        get
-        {
-            List<RecordCERT> list = new List<RecordCERT>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordCERT record = answerRR.RECORD as RecordCERT;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    public RecordSRV[] RecordsSRV
-    {
-        get
-        {
-            List<RecordSRV> list = new List<RecordSRV>();
-            foreach (AnswerRR answerRR in this.Answers)
-            {
-                RecordSRV record = answerRR.RECORD as RecordSRV;
-                if (record is not null)
-                    list.Add(record);
-            }
-            return list.ToArray();
-        }
-    }
-
-    public RR[] RecordsRR
-    {
-        get
-        {
-            List<RR> list = new List<RR>();
-            foreach (RR rr in this.Answers)
-            {
-                list.Add(rr);
-            }
-            foreach (RR rr in this.Answers)
-            {
-                list.Add(rr);
-            }
-            foreach (RR rr in this.Authorities)
-            {
-                list.Add(rr);
-            }
-            foreach (RR rr in this.Additionals)
-            {
-                list.Add(rr);
-            }
-            return list.ToArray();
-        }
-    }
-
-
 }

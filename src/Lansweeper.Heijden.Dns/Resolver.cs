@@ -48,7 +48,7 @@ public sealed class Resolver : IDisposable
     private readonly List<IPEndPoint> _dnsServers = [];
 
     private readonly ReaderWriterLockSlim _responseCacheLock = new();
-    private readonly Dictionary<string,Response> _responseCache = new();
+    private readonly Dictionary<string,Response> _responseCache = [];
 
     /// <summary>
     /// Constructor of Resolver using DNS servers specified.
@@ -160,7 +160,7 @@ public sealed class Resolver : IDisposable
     {
         get
         {
-            return _dnsServers.ToArray();
+            return [.. _dnsServers];
         }
         set
         {
@@ -187,11 +187,11 @@ public sealed class Resolver : IDisposable
                 return;
             }
             var response = Query(value, QType.A);
-            if (response.RecordsA.Length > 0)
-            {
-                _dnsServers.Clear();
-                _dnsServers.Add(new IPEndPoint(response.RecordsA[0].Address, DefaultPort));
-            }
+            var recordA = response.GetRecords<RecordA>().FirstOrDefault();
+            if (recordA is null) return;
+
+            _dnsServers.Clear();
+            _dnsServers.Add(new IPEndPoint(recordA.Address, DefaultPort));
         }
     }
 
@@ -251,8 +251,8 @@ public sealed class Resolver : IDisposable
             _responseCacheLock.ExitReadLock();
         }
         
-        var timeLived = (int)((DateTime.UtcNow.Ticks - response.TimeStamp.ToUniversalTime().Ticks) / TimeSpan.TicksPerSecond);
-        foreach (var rr in response.RecordsRR)
+        var timeLived = (int)((DateTime.UtcNow.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
+        foreach (var rr in response.GetRecordsRR())
         {
             rr.TimeLived = timeLived;
             // The TTL property calculates its actual time to live
@@ -269,7 +269,7 @@ public sealed class Resolver : IDisposable
         if (response.Questions.Count == 0) return;
 
         // Only cached non-error responses
-        if (response.header.RCODE != RCode.NoError) return;
+        if (response.Header.RCODE != RCode.NoError) return;
 
         var question = response.Questions[0];
 
@@ -374,7 +374,7 @@ public sealed class Resolver : IDisposable
 
                         //Debug.WriteLine("Received "+ (bytesRead+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
 
-                        if (response.header.RCODE != RCode.NoError)
+                        if (response.Header.RCODE != RCode.NoError)
                         {
                             return response;
                         }
@@ -402,10 +402,10 @@ public sealed class Resolver : IDisposable
 
                         if (intSoa == 2)
                         {
-                            transferResponse.header.QDCOUNT = (ushort)transferResponse.Questions.Count;
-                            transferResponse.header.ANCOUNT = (ushort)transferResponse.Answers.Count;
-                            transferResponse.header.NSCOUNT = (ushort)transferResponse.Authorities.Count;
-                            transferResponse.header.ARCOUNT = (ushort)transferResponse.Additionals.Count;
+                            transferResponse.Header.QDCOUNT = (ushort)transferResponse.Questions.Count;
+                            transferResponse.Header.ANCOUNT = (ushort)transferResponse.Answers.Count;
+                            transferResponse.Header.NSCOUNT = (ushort)transferResponse.Authorities.Count;
+                            transferResponse.Header.ARCOUNT = (ushort)transferResponse.Additionals.Count;
                             transferResponse.MessageSize = intMessageSize;
                             return transferResponse;
                         }
@@ -500,7 +500,7 @@ public sealed class Resolver : IDisposable
                 list.Add(entry);
             }
         }
-        return list.ToArray();
+        return [..list];
     } 
    
     private IPHostEntry MakeEntry(string HostName)
@@ -528,8 +528,8 @@ public sealed class Resolver : IDisposable
                 }
             }
         }
-        entry.AddressList = addresses.ToArray();
-        entry.Aliases = aliases.ToArray();
+        entry.AddressList = [..addresses];
+        entry.Aliases = [..aliases];
 
         return entry;
     }
@@ -588,7 +588,8 @@ public sealed class Resolver : IDisposable
     public IPHostEntry GetHostEntry(IPAddress ip)
     {
         var response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
-        return response.RecordsPTR.Length > 0 ? MakeEntry(response.RecordsPTR[0].PTRDNAME) : new IPHostEntry();
+        var recordPTR = response.GetRecords<RecordPTR>().FirstOrDefault();
+        return recordPTR is null ? new IPHostEntry() : MakeEntry(recordPTR.PTRDNAME);
     }
 
     /// <summary>
