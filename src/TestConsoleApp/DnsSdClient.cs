@@ -18,8 +18,7 @@ internal class DnsSdClient : IDisposable
 
     public DnsSdClient(IPAddress ipAddress, int portNumber = 5353)
     {
-        var endPoint = new IPEndPoint(ipAddress, portNumber);
-        _client = new Resolver(endPoint);
+        _client = new Resolver(ipAddress, portNumber);
     }
 
     public async Task<DnsSdData> Query(int timeOut = 2000, bool useCache = false, byte retries = 0, CancellationToken cancellationToken = default)

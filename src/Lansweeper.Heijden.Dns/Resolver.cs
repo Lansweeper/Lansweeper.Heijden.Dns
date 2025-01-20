@@ -21,7 +21,7 @@ namespace Lansweeper.Heijden.Dns;
 /// <summary>
 /// Resolver is the main class to do DNS query lookups
 /// </summary>
-public sealed class Resolver : IDisposable
+public sealed class Resolver : IResolver
 {
     /// <summary>
     /// Version of this set of routines, when not in a library
@@ -67,43 +67,15 @@ public sealed class Resolver : IDisposable
     }
 
     /// <summary>
-    /// Constructor of Resolver using DNS server specified.
-    /// </summary>
-    /// <param name="DnsServer">DNS server to use</param>
-    public Resolver(IPEndPoint DnsServer)
-        : this([DnsServer])
-    {
-    }
-
-    /// <summary>
     /// Constructor of Resolver using DNS server and port specified.
     /// </summary>
     /// <param name="serverIpAddress">DNS server to use</param>
     /// <param name="serverPortNumber">DNS port to use</param>
-    public Resolver(IPAddress serverIpAddress, int serverPortNumber)
-        : this(new IPEndPoint(serverIpAddress,serverPortNumber))
+    public Resolver(IPAddress serverIpAddress, int serverPortNumber = DefaultPort)
+        : this([new IPEndPoint(serverIpAddress,serverPortNumber)])
     {
     }
-
-    /// <summary>
-    /// Constructor of Resolver using DNS address and port specified.
-    /// </summary>
-    /// <param name="serverIpAddress">DNS server address to use</param>
-    /// <param name="serverPortNumber">DNS port to use</param>
-    public Resolver(string serverIpAddress, int serverPortNumber)
-        : this(IPAddress.Parse(serverIpAddress), serverPortNumber)
-    {
-    }
-		
-    /// <summary>
-    /// Constructor of Resolver using DNS address.
-    /// </summary>
-    /// <param name="serverIpAddress">DNS server address to use</param>
-    public Resolver(string serverIpAddress)
-        : this(IPAddress.Parse(serverIpAddress), DefaultPort)
-    {
-    }
-
+    
     /// <summary>
     /// Resolver constructor, using DNS servers specified by Windows
     /// </summary>
