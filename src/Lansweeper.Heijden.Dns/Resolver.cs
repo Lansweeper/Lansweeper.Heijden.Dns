@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Text;
 using System.Net.Sockets;
-
 using System.Net.NetworkInformation;
+using System.Reflection;
 
 
 /*
@@ -22,34 +19,34 @@ namespace Heijden.DNS;
 /// <summary>
 /// Resolver is the main class to do DNS query lookups
 /// </summary>
-public class Resolver
+public sealed class Resolver : IDisposable
 {
     /// <summary>
     /// Version of this set of routines, when not in a library
     /// </summary>
-    public string Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+    public string Version { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? string.Empty;
 
     /// <summary>
     /// Default DNS port
     /// </summary>
-    public const int DefaultPort = 53;
+    private const int DefaultPort = 53;
 
     /// <summary>
     /// Gets list of OPENDNS servers
     /// </summary>
-    public static readonly IPEndPoint[] DefaultDnsServers = 
-    { 
-        new IPEndPoint(IPAddress.Parse("208.67.222.222"), DefaultPort), 
-        new IPEndPoint(IPAddress.Parse("208.67.220.220"), DefaultPort) 
-    };
+    public static readonly IPEndPoint[] DefaultDnsServers =
+    [
+        new(IPAddress.Parse("208.67.222.222"), DefaultPort), 
+        new(IPAddress.Parse("208.67.220.220"), DefaultPort)
+    ];
 
-    private ushort m_Unique;
-    private bool m_UseCache;
-    private int m_Retries;
+    private ushort _unique;
+    private bool _useCache;
 
-    private readonly List<IPEndPoint> m_DnsServers;
+    private readonly List<IPEndPoint> _dnsServers = [];
 
-    private readonly Dictionary<string,Response> m_ResponseCache;
+    private readonly ReaderWriterLockSlim _responseCacheLock = new();
+    private readonly Dictionary<string,Response> _responseCache = new();
 
     /// <summary>
     /// Constructor of Resolver using DNS servers specified.
@@ -57,15 +54,13 @@ public class Resolver
     /// <param name="DnsServers">Set of DNS servers</param>
     public Resolver(IPEndPoint[] DnsServers)
     {
-        m_ResponseCache = new Dictionary<string, Response>();
-        m_DnsServers = new List<IPEndPoint>();
-        m_DnsServers.AddRange(DnsServers);
+        _dnsServers.AddRange(DnsServers);
 
-        m_Unique = (ushort)(new Random()).Next();
-        m_Retries = 3;
+        _unique = (ushort)(Random.Shared.Next(0, ushort.MaxValue));
+        Retries = 2;
         TimeOut = 1000;
         Recursion = true;
-        m_UseCache = true;
+        _useCache = true;
         TransportType = TransportType.Udp;
     }
 
@@ -74,36 +69,36 @@ public class Resolver
     /// </summary>
     /// <param name="DnsServer">DNS server to use</param>
     public Resolver(IPEndPoint DnsServer)
-        : this(new IPEndPoint[] { DnsServer })
+        : this([DnsServer])
     {
     }
 
     /// <summary>
     /// Constructor of Resolver using DNS server and port specified.
     /// </summary>
-    /// <param name="ServerIpAddress">DNS server to use</param>
-    /// <param name="ServerPortNumber">DNS port to use</param>
-    public Resolver(IPAddress ServerIpAddress, int ServerPortNumber)
-        : this(new IPEndPoint(ServerIpAddress,ServerPortNumber))
+    /// <param name="serverIpAddress">DNS server to use</param>
+    /// <param name="serverPortNumber">DNS port to use</param>
+    public Resolver(IPAddress serverIpAddress, int serverPortNumber)
+        : this(new IPEndPoint(serverIpAddress,serverPortNumber))
     {
     }
 
     /// <summary>
     /// Constructor of Resolver using DNS address and port specified.
     /// </summary>
-    /// <param name="ServerIpAddress">DNS server address to use</param>
-    /// <param name="ServerPortNumber">DNS port to use</param>
-    public Resolver(string ServerIpAddress, int ServerPortNumber)
-        : this(IPAddress.Parse(ServerIpAddress), ServerPortNumber)
+    /// <param name="serverIpAddress">DNS server address to use</param>
+    /// <param name="serverPortNumber">DNS port to use</param>
+    public Resolver(string serverIpAddress, int serverPortNumber)
+        : this(IPAddress.Parse(serverIpAddress), serverPortNumber)
     {
     }
 		
     /// <summary>
     /// Constructor of Resolver using DNS address.
     /// </summary>
-    /// <param name="ServerIpAddress">DNS server address to use</param>
-    public Resolver(string ServerIpAddress)
-        : this(IPAddress.Parse(ServerIpAddress), DefaultPort)
+    /// <param name="serverIpAddress">DNS server address to use</param>
+    public Resolver(string serverIpAddress)
+        : this(IPAddress.Parse(serverIpAddress), DefaultPort)
     {
     }
 
@@ -115,19 +110,14 @@ public class Resolver
     {
     }
 
-    public class VerboseOutputEventArgs : EventArgs
+    public class VerboseOutputEventArgs(string message) : EventArgs
     {
-        public string Message;
-        public VerboseOutputEventArgs(string Message)
-        {
-            this.Message = Message;
-        }
+        public string Message { get; set; } = message;
     }
 
     private void Verbose(string format, params object[] args)
     {
-        if (OnVerbose != null)
-            OnVerbose(this, new VerboseEventArgs(string.Format(format, args)));
+        OnVerbose?.Invoke(this, new VerboseEventArgs(string.Format(format, args)));
     }
 
     /// <summary>
@@ -136,36 +126,20 @@ public class Resolver
     public event VerboseEventHandler OnVerbose;
     public delegate void VerboseEventHandler(object sender, VerboseEventArgs e);
 
-    public class VerboseEventArgs : EventArgs
+    public class VerboseEventArgs(string message) : EventArgs
     {
-        public string Message;
-        public VerboseEventArgs(string Message)
-        {
-            this.Message = Message;
-        }
+        public string Message { get; set; } = message;
     }
-
-
+    
     /// <summary>
     /// Gets or sets timeout in milliseconds
     /// </summary>
     public int TimeOut { get; set; }
 
     /// <summary>
-    /// Gets or sets number of retries before giving up
+    /// Gets or sets number of extra retries before giving up
     /// </summary>
-    public int Retries
-    {
-        get
-        {
-            return m_Retries;
-        }
-        set
-        {
-            if(value>=1)
-                m_Retries = value;
-        }
-    }
+    public byte Retries { get; set; }
 
     /// <summary>
     /// Gets or set recursion for doing queries
@@ -184,12 +158,12 @@ public class Resolver
     {
         get
         {
-            return m_DnsServers.ToArray();
+            return _dnsServers.ToArray();
         }
         set
         {
-            m_DnsServers.Clear();
-            m_DnsServers.AddRange(value);
+            _dnsServers.Clear();
+            _dnsServers.AddRange(value);
         }
     }
 
@@ -200,38 +174,37 @@ public class Resolver
     {
         get
         {
-            return m_DnsServers[0].Address.ToString();
+            return _dnsServers[0].Address.ToString();
         }
         set
         {
-            IPAddress ip;
-            if (IPAddress.TryParse(value, out ip))
+            if (IPAddress.TryParse(value, out var ip))
             {
-                m_DnsServers.Clear();
-                m_DnsServers.Add(new IPEndPoint(ip, DefaultPort));
+                _dnsServers.Clear();
+                _dnsServers.Add(new IPEndPoint(ip, DefaultPort));
                 return;
             }
-            Response response = Query(value, QType.A);
+            var response = Query(value, QType.A);
             if (response.RecordsA.Length > 0)
             {
-                m_DnsServers.Clear();
-                m_DnsServers.Add(new IPEndPoint(response.RecordsA[0].Address, DefaultPort));
+                _dnsServers.Clear();
+                _dnsServers.Add(new IPEndPoint(response.RecordsA[0].Address, DefaultPort));
             }
         }
     }
-
 
     public bool UseCache
     {
         get
         {
-            return m_UseCache;
+            return _useCache;
         }
         set
         {
-            m_UseCache = value;
-            if (!m_UseCache)
-                m_ResponseCache.Clear();
+            _useCache = value;
+            if (_useCache) return;
+
+            ClearCache();
         }
     }
 
@@ -240,21 +213,29 @@ public class Resolver
     /// </summary>
     public void ClearCache()
     {
-        m_ResponseCache.Clear();
+        try
+        {
+            _responseCacheLock.EnterWriteLock();
+            _responseCache.Clear();
+        }
+        finally
+        {
+            _responseCacheLock.ExitWriteLock();
+        }
     }
 
     private Response? SearchInCache(Question question)
     {
-        if (!m_UseCache)
-            return null;
+        if (!_useCache) return null;
 
         var strKey = $"{question.QClass}-{question.QType}-{question.QName}";
 
         Response? response = null;
 
-        lock (m_ResponseCache)
+        try
         {
-            if (m_ResponseCache.TryGetValue(strKey, out var value))
+            _responseCacheLock.EnterReadLock();
+            if (_responseCache.TryGetValue(strKey, out var value))
             {
                 response = value;
             }
@@ -263,49 +244,53 @@ public class Resolver
                 return null;
             }
         }
-
-        var timeLived = (int)((DateTime.Now.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
+        finally
+        {
+            _responseCacheLock.ExitReadLock();
+        }
+        
+        var timeLived = (int)((DateTime.UtcNow.Ticks - response.TimeStamp.ToUniversalTime().Ticks) / TimeSpan.TicksPerSecond);
         foreach (var rr in response.RecordsRR)
         {
             rr.TimeLived = timeLived;
             // The TTL property calculates its actual time to live
-            if (rr.TTL == 0)
-                return null; // out of date
+            if (rr.TTL == 0) return null; // out of date
         }
         return response;
     }
 
     private void AddToCache(Response response)
     {
-        if (!m_UseCache)
-            return;
+        if (!_useCache) return;
 
         // No question, no caching
-        if (response.Questions.Count == 0)
-            return;
+        if (response.Questions.Count == 0) return;
 
         // Only cached non-error responses
-        if (response.header.RCODE != RCode.NoError)
-            return;
+        if (response.header.RCODE != RCode.NoError) return;
 
-        Question question = response.Questions[0];
+        var question = response.Questions[0];
 
-        string strKey = question.QClass + "-" + question.QType + "-" + question.QName;
+        var strKey = $"{question.QClass}-{question.QType}-{question.QName}";
 
-        lock (m_ResponseCache)
+        try
         {
-            m_ResponseCache.Remove(strKey);
-            m_ResponseCache.Add(strKey, response);
+            _responseCacheLock.EnterWriteLock();
+            _responseCache[strKey] = response;
+        }
+        finally
+        {
+           _responseCacheLock.ExitWriteLock();
         }
     }
 
     private Response UdpRequest(Request request)
     {
-        for (var intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+        for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
         {
-            for (var intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
+            for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
             {
-                var endpoint = m_DnsServers[intDnsServer];
+                var endpoint = _dnsServers[intDnsServer];
                 using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
                 udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
 
@@ -324,7 +309,7 @@ public class Resolver
                 }
                 finally
                 {
-                    m_Unique++;
+                    _unique++;
                     // close the connection
                     udpClient.Close();
                 }
@@ -336,26 +321,23 @@ public class Resolver
 
     private Response TcpRequest(Request request)
     {
-        //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        //sw.Start();
-
-        for (int intAttempts = 0; intAttempts < m_Retries; intAttempts++)
+        for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
         {
-            for (int intDnsServer = 0; intDnsServer < m_DnsServers.Count; intDnsServer++)
+            for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
             {
                 using var tcpClient = new TcpClient();
                 tcpClient.ReceiveTimeout = TimeOut;
 
                 try
                 {
-                    IAsyncResult result = tcpClient.BeginConnect(m_DnsServers[intDnsServer].Address, m_DnsServers[intDnsServer].Port, null, null);
+                    var result = tcpClient.BeginConnect(_dnsServers[intDnsServer].Address, _dnsServers[intDnsServer].Port, null, null);
 
-                    bool success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
+                    var success = result.AsyncWaitHandle.WaitOne(TimeOut, true);
 
                     if (!success || !tcpClient.Connected)
                     {
                         tcpClient.Close();
-                        Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+                        Verbose($";; Connection to nameserver {(intDnsServer + 1)} failed");
                         continue;
                     }
 
@@ -366,32 +348,34 @@ public class Resolver
                     bs.Write(data, 0, data.Length);
                     bs.Flush();
 
-                    var TransferResponse = new Response();
-                    int intSoa = 0;
-                    int intMessageSize = 0;
+                    var transferResponse = new Response();
+                    var intSoa = 0;
+                    var intMessageSize = 0;
 
                     //Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
 
                     while (true)
                     {
-                        int intLength = bs.ReadByte() << 8 | bs.ReadByte();
+                        var intLength = bs.ReadByte() << 8 | bs.ReadByte();
                         if (intLength <= 0)
                         {
                             tcpClient.Close();
-                            Verbose(string.Format(";; Connection to nameserver {0} failed", (intDnsServer + 1)));
+                            Verbose($";; Connection to nameserver {(intDnsServer + 1)} failed");
                             throw new SocketException(); // next try
                         }
 
                         intMessageSize += intLength;
 
                         data = new byte[intLength];
-                        bs.Read(data, 0, intLength);
-                        Response response = new Response(m_DnsServers[intDnsServer], data);
+                        var bytesRead = bs.Read(data, 0, intLength);
+                        var response = new Response(_dnsServers[intDnsServer], data[..bytesRead]);
 
-                        //Debug.WriteLine("Received "+ (intLength+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
+                        //Debug.WriteLine("Received "+ (bytesRead+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
 
                         if (response.header.RCODE != RCode.NoError)
+                        {
                             return response;
+                        }
 
                         if (response.Questions[0].QType != QType.AXFR)
                         {
@@ -401,23 +385,27 @@ public class Resolver
 
                         // Zone transfer!!
 
-                        if(TransferResponse.Questions.Count==0)
-                            TransferResponse.Questions.AddRange(response.Questions);
-                        TransferResponse.Answers.AddRange(response.Answers);
-                        TransferResponse.Authorities.AddRange(response.Authorities);
-                        TransferResponse.Additionals.AddRange(response.Additionals);
+                        if (transferResponse.Questions.Count == 0)
+                        {
+                            transferResponse.Questions.AddRange(response.Questions);
+                        }
+                        transferResponse.Answers.AddRange(response.Answers);
+                        transferResponse.Authorities.AddRange(response.Authorities);
+                        transferResponse.Additionals.AddRange(response.Additionals);
 
                         if (response.Answers[0].Type == Type.SOA)
+                        {
                             intSoa++;
+                        }
 
                         if (intSoa == 2)
                         {
-                            TransferResponse.header.QDCOUNT = (ushort)TransferResponse.Questions.Count;
-                            TransferResponse.header.ANCOUNT = (ushort)TransferResponse.Answers.Count;
-                            TransferResponse.header.NSCOUNT = (ushort)TransferResponse.Authorities.Count;
-                            TransferResponse.header.ARCOUNT = (ushort)TransferResponse.Additionals.Count;
-                            TransferResponse.MessageSize = intMessageSize;
-                            return TransferResponse;
+                            transferResponse.header.QDCOUNT = (ushort)transferResponse.Questions.Count;
+                            transferResponse.header.ANCOUNT = (ushort)transferResponse.Answers.Count;
+                            transferResponse.header.NSCOUNT = (ushort)transferResponse.Authorities.Count;
+                            transferResponse.header.ARCOUNT = (ushort)transferResponse.Additionals.Count;
+                            transferResponse.MessageSize = intMessageSize;
+                            return transferResponse;
                         }
                     }
                 } // try
@@ -427,7 +415,7 @@ public class Resolver
                 }
                 finally
                 {
-                    m_Unique++;
+                    _unique++;
 
                     // close the socket
                     tcpClient.Close();
@@ -441,17 +429,19 @@ public class Resolver
     /// Do Query on specified DNS servers
     /// </summary>
     /// <param name="name">Name to query</param>
-    /// <param name="qtype">Question type</param>
-    /// <param name="qclass">Class type</param>
+    /// <param name="qType">Question type</param>
+    /// <param name="qClass">Class type</param>
     /// <returns>Response of the query</returns>
-    public Response Query(string name, QType qtype, QClass qclass)
+    public Response Query(string name, QType qType, QClass qClass)
     {
-        Question question = new Question(name, qtype, qclass);
-        Response response = SearchInCache(question);
-        if (response != null)
+        var question = new Question(name, qType, qClass);
+        var response = SearchInCache(question);
+        if (response is not null)
+        {
             return response;
+        }
 
-        Request request = new Request();
+        var request = new Request();
         request.AddQuestion(question);
         return GetResponse(request);
     }
@@ -460,34 +450,33 @@ public class Resolver
     /// Do an QClass=IN Query on specified DNS servers
     /// </summary>
     /// <param name="name">Name to query</param>
-    /// <param name="qtype">Question type</param>
+    /// <param name="qType">Question type</param>
     /// <returns>Response of the query</returns>
-    public Response Query(string name, QType qtype)
+    public Response Query(string name, QType qType)
     {
-        Question question = new Question(name, qtype, QClass.IN);
-        Response response = SearchInCache(question);
-        if (response != null)
+        var question = new Question(name, qType, QClass.IN);
+        var response = SearchInCache(question);
+        if (response is not null)
+        {
             return response;
+        }
 
-        Request request = new Request();
+        var request = new Request();
         request.AddQuestion(question);
         return GetResponse(request);
     }
 
     private Response GetResponse(Request request)
     {
-        request.Header.ID = m_Unique;
+        request.Header.ID = _unique;
         request.Header.RD = Recursion;
 
-        if (TransportType == TransportType.Udp)
-            return UdpRequest(request);
-
-        if (TransportType == TransportType.Tcp)
-            return TcpRequest(request);
-
-        Response response = new Response();
-        response.Error = "Unknown TransportType";
-        return response;
+        return TransportType switch
+        {
+            TransportType.Udp => UdpRequest(request),
+            TransportType.Tcp => TcpRequest(request),
+            _ => new Response { Error = "Unknown TransportType" }
+        };
     }
 
     /// <summary>
@@ -496,57 +485,49 @@ public class Resolver
     /// <returns></returns>
     public static IPEndPoint[] GetDnsServers()
     {
-        List<IPEndPoint> list = new List<IPEndPoint>();
+        var list = new HashSet<IPEndPoint>();
 
-        NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
-        foreach (NetworkInterface n in adapters)
+        foreach (var n in NetworkInterface.GetAllNetworkInterfaces())
         {
-            if (n.OperationalStatus == OperationalStatus.Up)
+            if (n.OperationalStatus != OperationalStatus.Up) continue;
+            
+            var ipProps = n.GetIPProperties();
+            foreach (var ipAddr in ipProps.DnsAddresses)
             {
-                IPInterfaceProperties ipProps = n.GetIPProperties();
-                // thanks to Jon Webster on May 20, 2008
-                foreach (IPAddress ipAddr in ipProps.DnsAddresses)
-                {
-                    IPEndPoint entry = new IPEndPoint(ipAddr, DefaultPort);
-                    if (!list.Contains(entry))
-                        list.Add(entry);
-                }
-
+                var entry = new IPEndPoint(ipAddr, DefaultPort);
+                list.Add(entry);
             }
         }
         return list.ToArray();
     } 
-
-
-    //
-
+   
     private IPHostEntry MakeEntry(string HostName)
     {
-        IPHostEntry entry = new IPHostEntry();
+        var entry = new IPHostEntry { HostName = HostName };
 
-        entry.HostName = HostName;
-
-        Response response = Query(HostName, QType.A, QClass.IN);
+        var response = Query(HostName, QType.A, QClass.IN);
 
         // fill AddressList and aliases
-        List<IPAddress> AddressList = new List<IPAddress>();
-        List<string> Aliases = new List<string>();
-        foreach (AnswerRR answerRR in response.Answers)
+        var addresses = new HashSet<IPAddress>();
+        var aliases = new HashSet<string>();
+        foreach (var answerRR in response.Answers)
         {
             if (answerRR.Type == Type.A)
             {
                 // answerRR.RECORD.ToString() == (answerRR.RECORD as RecordA).Address
-                AddressList.Add(IPAddress.Parse((answerRR.RECORD.ToString())));
+                addresses.Add(IPAddress.Parse((answerRR.RECORD.ToString())));
                 entry.HostName = answerRR.NAME;
             }
             else
             {
                 if (answerRR.Type == Type.CNAME)
-                    Aliases.Add(answerRR.NAME);
+                {
+                    aliases.Add(answerRR.NAME);
+                }
             }
         }
-        entry.AddressList = AddressList.ToArray();
-        entry.Aliases = Aliases.ToArray();
+        entry.AddressList = addresses.ToArray();
+        entry.Aliases = aliases.ToArray();
 
         return entry;
     }
@@ -558,42 +539,41 @@ public class Resolver
     /// <returns>The 'mirrored' IPV4 or IPV6 arpa address</returns>
     public static string GetArpaFromIp(IPAddress ip)
     {
-        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        switch (ip.AddressFamily)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("in-addr.arpa.");
-            foreach (byte b in ip.GetAddressBytes())
+            case AddressFamily.InterNetwork:
             {
-                sb.Insert(0, string.Format("{0}.", b));
+                var sb = new StringBuilder("in-addr.arpa.");
+                foreach (var b in ip.GetAddressBytes())
+                {
+                    sb.Insert(0, $"{b}.");
+                }
+                return sb.ToString();
             }
-            return sb.ToString();
-        }
-        if (ip.AddressFamily == AddressFamily.InterNetworkV6)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("ip6.arpa.");
-            foreach (byte b in ip.GetAddressBytes())
+            case AddressFamily.InterNetworkV6:
             {
-                sb.Insert(0, string.Format("{0:x}.", (b >> 4) & 0xf));
-                sb.Insert(0, string.Format("{0:x}.", (b >> 0) & 0xf));
+                var sb = new StringBuilder("ip6.arpa.");
+                foreach (var b in ip.GetAddressBytes())
+                {
+                    sb.Insert(0, $"{(b >> 4) & 0xf:x}.");
+                    sb.Insert(0, $"{(b >> 0) & 0xf:x}.");
+                }
+                return sb.ToString();
             }
-            return sb.ToString();
+            default:
+                return "?";
         }
-        return "?";
     }
 
     public static string GetArpaFromEnum(string strEnum)
     {
-        StringBuilder sb = new StringBuilder();
-        string Number = System.Text.RegularExpressions.Regex.Replace(strEnum, "[^0-9]", "");
-        sb.Append("e164.arpa.");
-        foreach (char c in Number)
+        var sb = new StringBuilder("e164.arpa.");
+        foreach (var c in strEnum.Where(c => char.IsBetween(c, '0', '9')))
         {
-            sb.Insert(0, string.Format("{0}.", c));
+            sb.Insert(0, $"{c}.");
         }
         return sb.ToString();
     }
-
 
     /// <summary>
     ///		Resolves an IP address to an System.Net.IPHostEntry instance.
@@ -605,11 +585,8 @@ public class Resolver
     ///</returns>
     public IPHostEntry GetHostEntry(IPAddress ip)
     {
-        Response response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
-        if (response.RecordsPTR.Length > 0)
-            return MakeEntry(response.RecordsPTR[0].PTRDNAME);
-        else
-            return new IPHostEntry();
+        var response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
+        return response.RecordsPTR.Length > 0 ? MakeEntry(response.RecordsPTR[0].PTRDNAME) : new IPHostEntry();
     }
 
     /// <summary>
@@ -622,11 +599,7 @@ public class Resolver
     ///</returns>
     public IPHostEntry GetHostEntry(string hostNameOrAddress)
     {
-        IPAddress iPAddress;
-        if (IPAddress.TryParse(hostNameOrAddress, out iPAddress))
-            return GetHostEntry(iPAddress);
-        else
-            return MakeEntry(hostNameOrAddress);
+        return IPAddress.TryParse(hostNameOrAddress, out var iPAddress) ? GetHostEntry(iPAddress) : MakeEntry(hostNameOrAddress);
     }
 
 
@@ -645,36 +618,39 @@ public class Resolver
         using var sr = new StreamReader(strPath);
         while (!sr.EndOfStream)
         {
-            string strLine = sr.ReadLine();
-            if (strLine == null)
-                break;
-            int intI = strLine.IndexOf(';');
+            var strLine = sr.ReadLine();
+            if (strLine is null) break;
+
+            var intI = strLine.IndexOf(';');
             if (intI >= 0)
-                strLine = strLine.Substring(0, intI);
+            {
+                strLine = strLine[..intI];
+            }
             strLine = strLine.Trim();
-            if (strLine.Length == 0)
-                continue;
-            RRRecordStatus status = RRRecordStatus.NAME;
-            string Name="";
-            string Ttl="";
-            string Class="";
-            string Type="";
-            string Value="";
-            string strW = "";
+            if (strLine.Length == 0) continue;
+
+            var status = RRRecordStatus.NAME;
+            var name = string.Empty;
+            var ttl = string.Empty;
+            var Class = string.Empty;
+            var type=string.Empty;
+            var value = string.Empty;
+            var strW = string.Empty;
+
             for (intI = 0; intI < strLine.Length; intI++)
             {
-                char C = strLine[intI];
+                var c = strLine[intI];
 
-                if (C <= ' ' && strW!="")
+                if (c <= ' ' && strW != string.Empty)
                 {
                     switch (status)
                     {
                         case RRRecordStatus.NAME:
-                            Name = strW;
+                            name = strW;
                             status = RRRecordStatus.TTL;
                             break;
                         case RRRecordStatus.TTL:
-                            Ttl = strW;
+                            ttl = strW;
                             status = RRRecordStatus.CLASS;
                             break;
                         case RRRecordStatus.CLASS:
@@ -682,23 +658,32 @@ public class Resolver
                             status = RRRecordStatus.TYPE;
                             break;
                         case RRRecordStatus.TYPE:
-                            Type = strW;
+                            type = strW;
                             status = RRRecordStatus.VALUE;
                             break;
                         case RRRecordStatus.VALUE:
-                            Value = strW;
+                            value = strW;
                             status = RRRecordStatus.UNKNOWN;
                             break;
                         default:
                             break;
                     }
-                    strW = "";
+                    strW = string.Empty;
                 }
-                if (C > ' ')
-                    strW += C;
+
+                if (c > ' ')
+                {
+                    strW += c;
+                }
             }
 
         }
         sr.Close();
     }
-} // class
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _responseCacheLock.Dispose();
+    }
+}

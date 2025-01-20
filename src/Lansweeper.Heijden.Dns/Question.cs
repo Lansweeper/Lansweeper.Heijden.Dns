@@ -45,31 +45,31 @@ QCLASS          a two octet code that specifies the class of the query.
 
 public class Question
 {
-    private string m_QName;
+    private string _mQName;
 
     public string QName
     {
         get
         {
-            return m_QName;
+            return _mQName;
         }
         set
         {
-            m_QName = value;
-            if (!m_QName.EndsWith('.'))
+            _mQName = value;
+            if (!_mQName.EndsWith('.'))
             {
-                m_QName += ".";
+                _mQName += ".";
             }
         }
     }
     public QType QType { get; set; }
     public QClass QClass { get; set; }
 
-    public Question(string QName,QType QType,QClass QClass)
+    public Question(string qName,QType qType,QClass qClass)
     {
-        this.QName = QName;
-        this.QType = QType;
-        this.QClass = QClass;
+        QName = qName;
+        QType = qType;
+        QClass = qClass;
     }
 
     public Question(RecordReader rr)

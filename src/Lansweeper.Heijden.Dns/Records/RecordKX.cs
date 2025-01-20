@@ -51,7 +51,7 @@ namespace Heijden.DNS
 		public int CompareTo(object? objA)
 		{
 			RecordKX recordKX = objA as RecordKX;
-			if (recordKX == null)
+			if (recordKX is null)
 				return -1;
 			else if (this.PREFERENCE > recordKX.PREFERENCE)
 				return 1;

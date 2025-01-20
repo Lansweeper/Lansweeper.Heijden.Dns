@@ -127,7 +127,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordTXT record = answerRR.RECORD as RecordTXT;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -145,7 +145,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordA record = answerRR.RECORD as RecordA;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -163,7 +163,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordPTR record = answerRR.RECORD as RecordPTR;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -181,7 +181,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordCNAME record = answerRR.RECORD as RecordCNAME;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -199,7 +199,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordAAAA record = answerRR.RECORD as RecordAAAA;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -217,7 +217,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordNS record = answerRR.RECORD as RecordNS;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -235,7 +235,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordSOA record = answerRR.RECORD as RecordSOA;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -253,7 +253,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordCERT record = answerRR.RECORD as RecordCERT;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
@@ -268,7 +268,7 @@ public class Response
             foreach (AnswerRR answerRR in this.Answers)
             {
                 RecordSRV record = answerRR.RECORD as RecordSRV;
-                if (record != null)
+                if (record is not null)
                     list.Add(record);
             }
             return list.ToArray();
