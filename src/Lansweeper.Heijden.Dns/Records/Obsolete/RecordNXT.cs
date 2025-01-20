@@ -1,5 +1,5 @@
 using System.Text;
-using Type = Heijden.Dns.Enums.Type;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
 /*
  * http://tools.ietf.org/rfc/rfc2065.txt
@@ -37,46 +37,42 @@ using Type = Heijden.Dns.Enums.Type;
 
 
  */
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
+
+public class RecordNXT : Record
 {
-    public class RecordNXT : Record
-	{
-		public string NEXTDOMAINNAME;
-		public byte[] BITMAP;
+    public string NEXTDOMAINNAME { get; set; }
+    public byte[] BITMAP { get; set; }
 
-		public RecordNXT(RecordReader rr)
-		{
-			ushort length = rr.ReadUInt16(-2);
-			NEXTDOMAINNAME = rr.ReadDomainName();
-			length -= (ushort)rr.Position;
-			BITMAP = new byte[length];
-			BITMAP = rr.ReadBytes(length);
-		}
+    public RecordNXT(RecordReader rr)
+    {
+        var length = rr.ReadUInt16(-2);
+        NEXTDOMAINNAME = rr.ReadDomainName();
+        length -= (ushort)rr.Position;
+        BITMAP = new byte[length];
+        BITMAP = rr.ReadBytes(length);
+    }
 
-		private bool IsSet(int bitNr)
-		{
-			int intByte = (int)(bitNr / 8);
-			int intOffset = (bitNr % 8);
-			byte b = BITMAP[intByte];
-			int intTest = 1 << intOffset;
-			if ((b & intTest) == 0)
-				return false;
-			else
-				return true;
-		}
+    private bool IsSet(int bitNr)
+    {
+        var intByte = bitNr / 8;
+        var intOffset = bitNr % 8;
+        var b = BITMAP[intByte];
+        var intTest = 1 << intOffset;
+        return (b & intTest) != 0;
+    }
 
 
-		public override string ToString()
-		{
-			var sb = new StringBuilder();
-			for (var bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
-			{
-                if (IsSet(bitNr))
-                {
-                    sb.Append(" " + (Type)bitNr);
-                }
-			}
-			return $"{NEXTDOMAINNAME}{sb.ToString()}";
-		}
-	}
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        for (var bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
+        {
+            if (IsSet(bitNr))
+            {
+                sb.Append(" " + (Type)bitNr);
+            }
+        }
+        return $"{NEXTDOMAINNAME}{sb.ToString()}";
+    }
 }

@@ -1,4 +1,4 @@
-namespace Heijden.Dns.Enums;
+namespace Lansweeper.Heijden.Dns.Enums;
 
 /*
 RCODE           Response code - this 4 bit field is set as part of

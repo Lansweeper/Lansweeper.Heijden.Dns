@@ -1,4 +1,5 @@
-using System;
+
+
 /*
  *  http://www.ietf.org/rfc/rfc2782.txt
  * 
@@ -62,32 +63,25 @@ using System;
         available at this domain.
 
  */
+namespace Lansweeper.Heijden.Dns.Records;
 
-namespace Heijden.DNS
+public class RecordSRV : Record
 {
-	public class RecordSRV : Record
-	{
-		public ushort PRIORITY;
-		public ushort WEIGHT;
-		public ushort PORT;
-		public string TARGET;
+    public ushort PRIORITY { get; set; }
+    public ushort WEIGHT { get; set; }
+    public ushort PORT { get; set; }
+    public string TARGET { get; set; }
 
-		public RecordSRV(RecordReader rr)
-		{
-			PRIORITY = rr.ReadUInt16();
-			WEIGHT = rr.ReadUInt16();
-			PORT = rr.ReadUInt16();
-			TARGET = rr.ReadDomainName();
-		}
+    public RecordSRV(RecordReader rr)
+    {
+        PRIORITY = rr.ReadUInt16();
+        WEIGHT = rr.ReadUInt16();
+        PORT = rr.ReadUInt16();
+        TARGET = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3}",
-				PRIORITY,
-				WEIGHT,
-				PORT,
-				TARGET);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{PRIORITY} {WEIGHT} {PORT} {TARGET}";
+    }
 }

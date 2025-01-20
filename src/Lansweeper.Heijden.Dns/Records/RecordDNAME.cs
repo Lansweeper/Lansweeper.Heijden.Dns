@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://tools.ietf.org/rfc/rfc2672.txt
  * 
@@ -14,21 +15,18 @@ using System;
 
  * 
  */
-namespace Heijden.DNS
+
+public class RecordDNAME : Record
 {
-	public class RecordDNAME : Record
-	{
-		public string TARGET;
+    public string TARGET { get; set; }
 
-		public RecordDNAME(RecordReader rr)
-		{
-			TARGET = rr.ReadDomainName();
-		}
+    public RecordDNAME(RecordReader rr)
+    {
+        TARGET = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return TARGET;
-		}
-
-	}
+    public override string ToString()
+    {
+        return TARGET;
+    }
 }

@@ -4,7 +4,7 @@
  *
  *
  */
-namespace Heijden.Dns.Enums;
+namespace Lansweeper.Heijden.Dns.Enums;
 
 public enum TransportType
 {

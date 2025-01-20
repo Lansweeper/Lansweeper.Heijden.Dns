@@ -1,8 +1,8 @@
-using Heijden.Dns.Enums;
 using System.Net;
 using System.Text;
+using Lansweeper.Heijden.Dns.Enums;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 #region Rfc 1034/1035
 /*
@@ -46,20 +46,20 @@ QCLASS          a two octet code that specifies the class of the query.
 
 public class Question
 {
-    private string _mQName;
+    private string _qName;
 
     public string QName
     {
         get
         {
-            return _mQName;
+            return _qName;
         }
         set
         {
-            _mQName = value;
-            if (!_mQName.EndsWith('.'))
+            _qName = value;
+            if (!_qName.EndsWith('.'))
             {
-                _mQName += ".";
+                _qName += ".";
             }
         }
     }

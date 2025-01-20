@@ -1,6 +1,4 @@
-using System;
 using System.Text;
-using System.Collections.Generic;
 
 #region Rfc info
 /*
@@ -19,29 +17,28 @@ depends on the domain where it is found.
  * 
 */
 #endregion
+namespace Lansweeper.Heijden.Dns.Records;
 
-namespace Heijden.DNS
+public class RecordTXT : Record
 {
-	public class RecordTXT : Record
-	{
-		public List<string> TXT;
+    public List<string> TXT { get; } = [];
 
-		public RecordTXT(RecordReader rr, int Length)
-		{
-			int pos = rr.Position;
-			TXT = new List<string>();
-			while ((rr.Position - pos) < Length)
-				TXT.Add(rr.ReadString());
-		}
+    public RecordTXT(RecordReader rr, int length)
+    {
+        var pos = rr.Position;
+        while ((rr.Position - pos) < length)
+        {
+            TXT.Add(rr.ReadString());
+        }
+    }
 
-		public override string ToString()
-		{
-            var stringBuilder = new StringBuilder();
-            foreach (var str in this.TXT)
-            {
-                stringBuilder.Append($"\"{str}\" ");
-            }
-            return stringBuilder.ToString().TrimEnd();
-		}
-	}
+    public override string ToString()
+    {
+        var stringBuilder = new StringBuilder();
+        foreach (var str in this.TXT)
+        {
+            stringBuilder.Append($"\"{str}\" ");
+        }
+        return stringBuilder.ToString().TrimEnd();
+    }
 }

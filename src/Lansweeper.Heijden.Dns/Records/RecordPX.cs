@@ -1,7 +1,8 @@
-using System;
-/* 
+
+
+/*
  * http://tools.ietf.org/rfc/rfc2163.txt
- * 
+ *
 4. The new DNS resource record for MIXER mapping rules: PX
 
    The specification of the Internet DNS (RFC1035) provides a number of
@@ -65,33 +66,25 @@ using System;
    apply also for all the components of the PX RR. In particular <name>,
    MAP822 and MAPX400, as <domain-name> elements, must have the final
    "." (root) when they are fully qualified.
-
-
-
  */
 
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns.Records;
+
+public class RecordPX : Record
 {
-	public class RecordPX : Record
-	{
-		public UInt16 PREFERENCE;
-		public string MAP822;
-		public string MAPX400;
+    public ushort PREFERENCE { get; set; }
+    public string MAP822 { get; set; }
+    public string MAPX400 { get; set; }
 
-		public RecordPX(RecordReader rr)
-		{
-			PREFERENCE = rr.ReadUInt16();
-			MAP822 = rr.ReadDomainName();
-			MAPX400 = rr.ReadDomainName();
-		}
+    public RecordPX(RecordReader rr)
+    {
+        PREFERENCE = rr.ReadUInt16();
+        MAP822 = rr.ReadDomainName();
+        MAPX400 = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2}",
-				PREFERENCE,
-				MAP822,
-				MAPX400);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{PREFERENCE} {MAP822} {MAPX400}";
+    }
 }

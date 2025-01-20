@@ -1,6 +1,5 @@
 ﻿using AutoFixture;
 using FluentAssertions;
-using Heijden.DNS;
 
 namespace Lansweeper.Heijden.Dns.Tests;
 

@@ -1,4 +1,5 @@
-using System;
+
+
 /* 
  * http://tools.ietf.org/rfc/rfc1712.txt
  * 
@@ -37,29 +38,23 @@ using System;
    length.
 
  */
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
 
-namespace Heijden.DNS
+public class RecordGPOS : Record
 {
-	public class RecordGPOS : Record
-	{
-		public string LONGITUDE;
-		public string LATITUDE;
-		public string ALTITUDE;
+    public string LONGITUDE { get; set; }
+    public string LATITUDE { get; set; }
+    public string ALTITUDE { get; set; }
 
-		public RecordGPOS(RecordReader rr)
-		{
-			LONGITUDE = rr.ReadString();
-			LATITUDE = rr.ReadString();
-			ALTITUDE = rr.ReadString();
-		}
+    public RecordGPOS(RecordReader rr)
+    {
+        LONGITUDE = rr.ReadString();
+        LATITUDE = rr.ReadString();
+        ALTITUDE = rr.ReadString();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2}",
-				LONGITUDE,
-				LATITUDE,
-				ALTITUDE);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{LONGITUDE} {LATITUDE} {ALTITUDE}";
+    }
 }

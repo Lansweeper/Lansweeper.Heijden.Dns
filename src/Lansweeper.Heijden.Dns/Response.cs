@@ -1,6 +1,7 @@
 using System.Net;
+using Lansweeper.Heijden.Dns.Records;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 public class Response
 {

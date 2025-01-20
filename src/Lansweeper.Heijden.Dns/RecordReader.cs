@@ -1,9 +1,10 @@
-using Heijden.Dns.Enums;
 using System.Buffers.Binary;
 using System.Text;
-using Type = Heijden.Dns.Enums.Type;
+using Lansweeper.Heijden.Dns.Records;
+using Lansweeper.Heijden.Dns.Records.Obsolete;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 public class RecordReader(byte[] data, int position = 0)
 {
@@ -82,7 +83,7 @@ public class RecordReader(byte[] data, int position = 0)
         
     public ReadOnlySpan<byte> ReadSpan(int length)
     {
-        if (Position + length >= data.Length) return ReadBytes(length).AsSpan();
+        if (Position + length > data.Length) return ReadBytes(length).AsSpan();
 
         var result = data.AsSpan(Position, length);
         Position += length;
@@ -123,36 +124,36 @@ public class RecordReader(byte[] data, int position = 0)
             Type.AAAA => new RecordAAAA(this),
             Type.LOC => new RecordLOC(this),
             Type.NXT => new RecordNXT(this),
-            Type.EID => new RecordEID(this),
-            Type.NIMLOC => new RecordNIMLOC(this),
+            Type.EID => new RecordUnknown(this, type),
+            Type.NIMLOC => new RecordUnknown(this, type),
             Type.SRV => new RecordSRV(this),
-            Type.ATMA => new RecordATMA(this),
+            Type.ATMA => new RecordUnknown(this, type),
             Type.NAPTR => new RecordNAPTR(this),
             Type.KX => new RecordKX(this),
             Type.CERT => new RecordCERT(this),
-            Type.A6 => new RecordA6(this),
+            Type.A6 => new RecordUnknown(this, type),
             Type.DNAME => new RecordDNAME(this),
-            Type.SINK => new RecordSINK(this),
-            Type.OPT => new RecordOPT(this),
-            Type.APL => new RecordAPL(this),
+            Type.SINK => new RecordUnknown(this, type),
+            Type.OPT => new RecordUnknown(this, type),
+            Type.APL => new RecordUnknown(this, type),
             Type.DS => new RecordDS(this),
-            Type.SSHFP => new RecordSSHFP(this),
-            Type.IPSECKEY => new RecordIPSECKEY(this),
-            Type.RRSIG => new RecordRRSIG(this),
-            Type.NSEC => new RecordNSEC(this),
-            Type.DNSKEY => new RecordDNSKEY(this),
-            Type.DHCID => new RecordDHCID(this),
-            Type.NSEC3 => new RecordNSEC3(this),
-            Type.NSEC3PARAM => new RecordNSEC3PARAM(this),
-            Type.HIP => new RecordHIP(this),
-            Type.SPF => new RecordSPF(this),
-            Type.UINFO => new RecordUINFO(this),
-            Type.UID => new RecordUID(this),
-            Type.GID => new RecordGID(this),
+            Type.SSHFP => new RecordUnknown(this, type),
+            Type.IPSECKEY => new RecordUnknown(this, type),
+            Type.RRSIG => new RecordUnknown(this, type),
+            Type.NSEC => new RecordUnknown(this, type),
+            Type.DNSKEY => new RecordUnknown(this, type),
+            Type.DHCID => new RecordUnknown(this, type),
+            Type.NSEC3 => new RecordUnknown(this, type),
+            Type.NSEC3PARAM => new RecordUnknown(this, type),
+            Type.HIP => new RecordUnknown(this, type),
+            Type.SPF => new RecordUnknown(this, type),
+            Type.UINFO => new RecordUnknown(this, type),
+            Type.UID => new RecordUnknown(this, type),
+            Type.GID => new RecordUnknown(this, type),
             Type.UNSPEC => new RecordUNSPEC(this),
             Type.TKEY => new RecordTKEY(this),
             Type.TSIG => new RecordTSIG(this),
-            _ => new RecordUnknown(this)
+            _ => new RecordUnknown(this, Type.Unknown)
         };
     }
 }

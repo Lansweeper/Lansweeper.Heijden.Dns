@@ -1,4 +1,5 @@
-using System;
+
+
 /*
  * http://tools.ietf.org/rfc/rfc2930.txt
  * 
@@ -21,42 +22,35 @@ using System;
 
  */
 
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns.Records;
+
+public class RecordTKEY : Record
 {
-	public class RecordTKEY : Record
-	{
-		public string ALGORITHM;
-		public UInt32 INCEPTION;
-		public UInt32 EXPIRATION;
-		public UInt16 MODE;
-		public UInt16 ERROR;
-		public UInt16 KEYSIZE;
-		public byte[] KEYDATA;
-		public UInt16 OTHERSIZE;
-		public byte[] OTHERDATA;
+    public string ALGORITHM { get; set; }
+    public uint INCEPTION { get; set; }
+    public uint EXPIRATION { get; set; }
+    public ushort MODE { get; set; }
+    public ushort ERROR { get; set; }
+    public ushort KEYSIZE { get; set; }
+    public byte[] KEYDATA { get; set; }
+    public ushort OTHERSIZE { get; set; }
+    public byte[] OTHERDATA { get; set; }
 
-		public RecordTKEY(RecordReader rr)
-		{
-			ALGORITHM = rr.ReadDomainName();
-			INCEPTION = rr.ReadUInt32();
-			EXPIRATION = rr.ReadUInt32();
-			MODE = rr.ReadUInt16();
-			ERROR = rr.ReadUInt16();
-			KEYSIZE = rr.ReadUInt16();
-			KEYDATA = rr.ReadBytes(KEYSIZE);
-			OTHERSIZE = rr.ReadUInt16();
-			OTHERDATA = rr.ReadBytes(OTHERSIZE);
-		}
+    public RecordTKEY(RecordReader rr)
+    {
+        ALGORITHM = rr.ReadDomainName();
+        INCEPTION = rr.ReadUInt32();
+        EXPIRATION = rr.ReadUInt32();
+        MODE = rr.ReadUInt16();
+        ERROR = rr.ReadUInt16();
+        KEYSIZE = rr.ReadUInt16();
+        KEYDATA = rr.ReadBytes(KEYSIZE);
+        OTHERSIZE = rr.ReadUInt16();
+        OTHERDATA = rr.ReadBytes(OTHERSIZE);
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3} {4}",
-				ALGORITHM,
-				INCEPTION,
-				EXPIRATION,
-				MODE,
-				ERROR);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{ALGORITHM} {INCEPTION} {EXPIRATION} {MODE} {ERROR}";
+    }
 }

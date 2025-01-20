@@ -1,4 +1,4 @@
-namespace Heijden.Dns.Enums;
+namespace Lansweeper.Heijden.Dns.Enums;
 
 /*
 OPCODE          A four bit field that specifies kind of query in this

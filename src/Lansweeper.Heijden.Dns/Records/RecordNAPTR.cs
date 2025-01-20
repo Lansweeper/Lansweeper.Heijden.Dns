@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://www.faqs.org/rfcs/rfc2915.html
  * 
@@ -40,38 +41,27 @@ using System;
    RFC1035 [1].
 
  */
-
-namespace Heijden.DNS
+public class RecordNAPTR : Record
 {
-	public class RecordNAPTR : Record
-	{
-		public ushort ORDER;
-		public ushort PREFERENCE;
-		public string FLAGS;
-		public string SERVICES;
-		public string REGEXP;
-		public string REPLACEMENT;
+    public ushort ORDER { get; set; }
+    public ushort PREFERENCE { get; set; }
+    public string FLAGS { get; set; }
+    public string SERVICES { get; set; }
+    public string REGEXP { get; set; }
+    public string REPLACEMENT { get; set; }
 
-		public RecordNAPTR(RecordReader rr)
-		{
-			ORDER = rr.ReadUInt16();
-			PREFERENCE = rr.ReadUInt16();
-			FLAGS = rr.ReadString();
-			SERVICES = rr.ReadString();
-			REGEXP = rr.ReadString();
-			REPLACEMENT = rr.ReadDomainName();
-		}
+    public RecordNAPTR(RecordReader rr)
+    {
+        ORDER = rr.ReadUInt16();
+        PREFERENCE = rr.ReadUInt16();
+        FLAGS = rr.ReadString();
+        SERVICES = rr.ReadString();
+        REGEXP = rr.ReadString();
+        REPLACEMENT = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} \"{2}\" \"{3}\" \"{4}\" {5}",
-				ORDER,
-				PREFERENCE,
-				FLAGS,
-				SERVICES,
-				REGEXP,
-				REPLACEMENT);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{ORDER} {PREFERENCE} \"{FLAGS}\" \"{SERVICES}\" \"{REGEXP}\" {REPLACEMENT}";
+    }
 }

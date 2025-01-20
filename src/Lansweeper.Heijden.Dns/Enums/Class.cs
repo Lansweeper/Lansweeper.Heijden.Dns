@@ -1,4 +1,4 @@
-namespace Heijden.Dns.Enums;
+namespace Lansweeper.Heijden.Dns.Enums;
 
 /*
  * 3.2.4. CLASS values

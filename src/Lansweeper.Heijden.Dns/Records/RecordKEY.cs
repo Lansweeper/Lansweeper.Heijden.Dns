@@ -1,4 +1,4 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
 
 #region Rfc info
 /* http://www.ietf.org/rfc/rfc2535.txt
@@ -34,32 +34,23 @@ using System;
 
 */
 #endregion
-
-namespace Heijden.DNS
+public class RecordKEY : Record
 {
-	public class RecordKEY : Record
+	public ushort FLAGS { get; set; }
+	public byte PROTOCOL { get; set; }
+	public byte ALGORITHM { get; set; }
+	public string PUBLICKEY { get; set; }
+
+	public RecordKEY(RecordReader rr)
 	{
-		public UInt16 FLAGS;
-		public byte PROTOCOL;
-		public byte ALGORITHM;
-		public string PUBLICKEY;
+		FLAGS = rr.ReadUInt16();
+		PROTOCOL = rr.ReadByte();
+		ALGORITHM = rr.ReadByte();
+		PUBLICKEY = rr.ReadString();
+	}
 
-		public RecordKEY(RecordReader rr)
-		{
-			FLAGS = rr.ReadUInt16();
-			PROTOCOL = rr.ReadByte();
-			ALGORITHM = rr.ReadByte();
-			PUBLICKEY = rr.ReadString();
-		}
-
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} \"{3}\"",
-				FLAGS,
-				PROTOCOL,
-				ALGORITHM,
-				PUBLICKEY);
-		}
-
+	public override string ToString()
+	{
+		return $"{FLAGS} {PROTOCOL} {ALGORITHM} \"{PUBLICKEY}\"";
 	}
 }

@@ -1,4 +1,5 @@
-using System;
+
+
 /* http://tools.ietf.org/rfc/rfc1183.txt
 
 3.1. The X25 RR
@@ -29,23 +30,19 @@ using System;
 
 
  */
+namespace Lansweeper.Heijden.Dns.Records;
 
-namespace Heijden.DNS
+public class RecordX25 : Record
 {
-	public class RecordX25 : Record
-	{
-		public string PSDNADDRESS;
+    public string PSDNADDRESS { get; set; }
 
-		public RecordX25(RecordReader rr)
-		{
-			PSDNADDRESS = rr.ReadString();
-		}
+    public RecordX25(RecordReader rr)
+    {
+        PSDNADDRESS = rr.ReadString();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0}",
-				PSDNADDRESS);
-		}
-
-	}
+    public override string ToString()
+    {
+        return PSDNADDRESS;
+    }
 }

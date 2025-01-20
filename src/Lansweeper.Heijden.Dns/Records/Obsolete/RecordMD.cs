@@ -1,4 +1,5 @@
-using System;
+
+
 /*
 3.3.4. MD RDATA format (Obsolete)
 
@@ -21,21 +22,19 @@ the new scheme.  The recommended policy for dealing with MD RRs found in
 a master file is to reject them, or to convert them to MX RRs with a
 preference of 0.
  * */
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
+
+public class RecordMD : Record
 {
-	public class RecordMD : Record
-	{
-		public string MADNAME;
+    public string MADNAME { get; set; }
 
-		public RecordMD(RecordReader rr)
-		{
-			MADNAME = rr.ReadDomainName();
-		}
+    public RecordMD(RecordReader rr)
+    {
+        MADNAME = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return MADNAME;
-		}
-
-	}
+    public override string ToString()
+    {
+        return MADNAME;
+    }
 }

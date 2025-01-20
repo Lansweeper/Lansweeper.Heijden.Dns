@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
 3.3.8. MR RDATA format (EXPERIMENTAL)
 
@@ -16,21 +17,17 @@ MR records cause no additional section processing.  The main use for MR
 is as a forwarding entry for a user who has moved to a different
 mailbox.
 */
-namespace Heijden.DNS
+public class RecordMR : Record
 {
-	public class RecordMR : Record
-	{
-		public string NEWNAME;
+    public string NEWNAME { get; set; }
 
-		public RecordMR(RecordReader rr)
-		{
-			NEWNAME = rr.ReadDomainName();
-		}
+    public RecordMR(RecordReader rr)
+    {
+        NEWNAME = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return NEWNAME;
-		}
-
-	}
+    public override string ToString()
+    {
+        return NEWNAME;
+    }
 }

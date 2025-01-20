@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  3.3.7. MINFO RDATA format (EXPERIMENTAL)
 
@@ -30,23 +31,20 @@ MINFO records cause no additional section processing.  Although these
 records can be associated with a simple mailbox, they are usually used
 with a mailing list.
  */
-namespace Heijden.DNS
+
+public class RecordMINFO : Record
 {
-	public class RecordMINFO : Record
-	{
-		public string RMAILBX;
-		public string EMAILBX;
+    public string RMAILBX { get; set; }
+    public string EMAILBX { get; set; }
 
-		public RecordMINFO(RecordReader rr)
-		{
-			RMAILBX = rr.ReadDomainName();
-			EMAILBX = rr.ReadDomainName();
-		}
-
-		public override string ToString()
-		{
-			return string.Format("{0} {1}",RMAILBX,EMAILBX);
-		}
-
-	}
+    public RecordMINFO(RecordReader rr)
+    {
+        RMAILBX = rr.ReadDomainName();
+        EMAILBX = rr.ReadDomainName();
+    }
+    
+    public override string ToString()
+    {
+        return $"{RMAILBX} {EMAILBX}";
+    }
 }

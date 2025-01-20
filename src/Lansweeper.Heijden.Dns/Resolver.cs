@@ -1,10 +1,11 @@
 using System.Net;
-using System.Text;
-using System.Net.Sockets;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Reflection;
-using Heijden.Dns.Enums;
-using Type = Heijden.Dns.Enums.Type;
+using System.Text;
+using Lansweeper.Heijden.Dns.Enums;
+using Lansweeper.Heijden.Dns.Records;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
 
 /*
@@ -16,7 +17,7 @@ using Type = Heijden.Dns.Enums.Type;
  *
  */
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 /// <summary>
 /// Resolver is the main class to do DNS query lookups
@@ -589,7 +590,9 @@ public sealed class Resolver : IDisposable
     {
         var response = Query(GetArpaFromIp(ip), QType.PTR, QClass.IN);
         var recordPTR = response.GetRecords<RecordPTR>().FirstOrDefault();
-        return recordPTR is null ? new IPHostEntry() : MakeEntry(recordPTR.PTRDNAME);
+        return recordPTR is null 
+            ? new IPHostEntry() 
+            : MakeEntry(recordPTR.PTRDNAME);
     }
 
     /// <summary>

@@ -1,4 +1,6 @@
-using System;
+using System.Net;
+
+namespace Lansweeper.Heijden.Dns.Records;
 
 #region Rfc info
 /*
@@ -9,30 +11,17 @@ using System;
  */
 #endregion
 
-namespace Heijden.DNS
+public class RecordAAAA : Record
 {
-	public class RecordAAAA : Record
-	{
-		public System.Net.IPAddress Address;
+    public IPAddress Address { get; set; }
 
-		public RecordAAAA(RecordReader rr)
-		{
-			System.Net.IPAddress.TryParse(
-				string.Format("{0:x}:{1:x}:{2:x}:{3:x}:{4:x}:{5:x}:{6:x}:{7:x}",
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16(),
-				rr.ReadUInt16()), out this.Address);
-		}
+    public RecordAAAA(RecordReader rr)
+    {
+        Address = new IPAddress(rr.ReadSpan(16));
+    }
 
-		public override string ToString()
-		{
-			return Address.ToString();
-		}
-
-	}
+    public override string ToString()
+    {
+        return Address.ToString();
+    }
 }

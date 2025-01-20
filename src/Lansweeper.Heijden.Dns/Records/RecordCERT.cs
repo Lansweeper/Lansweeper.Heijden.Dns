@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
 
  CERT RR
@@ -13,35 +14,31 @@ using System;
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
  */
 
-namespace Heijden.DNS
+public class RecordCERT : Record
 {
-	public class RecordCERT : Record
-	{
-		public byte[] RDATA;
-        public ushort TYPE;
-        public ushort KEYTAG;  //Format
-        public byte ALGORITHM;
-        public string PUBLICKEY;
-        public byte[] RAWKEY;
+    public byte[] RDATA { get; set; }
+    public ushort TYPE { get; set; }
+    public ushort KEYTAG { get; set; }  //Format
+    public byte ALGORITHM { get; set; }
+    public string PUBLICKEY { get; set; }
+    public byte[] RAWKEY { get; set; }
 
-		public RecordCERT(RecordReader rr)
-		{
-			// re-read length
-			ushort RDLENGTH = rr.ReadUInt16(-2);
-            //RDATA = rr.ReadBytes(RDLENGTH);
+    public RecordCERT(RecordReader rr)
+    {
+        // re-read length
+        var RDLENGTH = rr.ReadUInt16(-2);
+        //RDATA = rr.ReadBytes(RDLENGTH);
 
-            TYPE = rr.ReadUInt16();
-            KEYTAG = rr.ReadUInt16();
-            ALGORITHM = rr.ReadByte();
-            var length = RDLENGTH - 5;
-            RAWKEY = rr.ReadBytes(length);
-            PUBLICKEY = Convert.ToBase64String(RAWKEY);
-		}
+        TYPE = rr.ReadUInt16();
+        KEYTAG = rr.ReadUInt16();
+        ALGORITHM = rr.ReadByte();
+        var length = RDLENGTH - 5;
+        RAWKEY = rr.ReadBytes(length);
+        PUBLICKEY = Convert.ToBase64String(RAWKEY);
+    }
 
-		public override string ToString()
-		{
-            return PUBLICKEY;
-		}
-
-	}
+    public override string ToString()
+    {
+        return PUBLICKEY;
+    }
 }

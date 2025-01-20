@@ -1,8 +1,7 @@
-using Heijden.Dns.Enums;
-using System.Buffers.Binary;
 using System.Net;
+using Lansweeper.Heijden.Dns.Enums;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 #region RFC specification
 /*

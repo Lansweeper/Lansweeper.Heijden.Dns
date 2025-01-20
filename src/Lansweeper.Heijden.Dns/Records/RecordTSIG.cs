@@ -1,4 +1,5 @@
-using System;
+
+
 /*
  * http://www.ietf.org/rfc/rfc2845.txt
  * 
@@ -19,46 +20,36 @@ using System;
       Other Data       octet stream   empty unless Error == BADTIME
 
  */
+namespace Lansweeper.Heijden.Dns.Records;
 
-namespace Heijden.DNS
+public class RecordTSIG : Record
 {
-	public class RecordTSIG : Record
-	{
-		public string ALGORITHMNAME;
-		public long TIMESIGNED;
-		public UInt16 FUDGE;
-		public UInt16 MACSIZE;
-		public byte[] MAC;
-		public UInt16 ORIGINALID;
-		public UInt16 ERROR;
-		public UInt16 OTHERLEN;
-		public byte[] OTHERDATA;
+    public string ALGORITHMNAME { get; set; }
+    public long TIMESIGNED { get; set; }
+    public ushort FUDGE { get; set; }
+    public ushort MACSIZE { get; set; }
+    public byte[] MAC { get; set; }
+    public ushort ORIGINALID { get; set; }
+    public ushort ERROR { get; set; }
+    public ushort OTHERLEN { get; set; }
+    public byte[] OTHERDATA { get; set; }
 
-		public RecordTSIG(RecordReader rr)
-		{
-			ALGORITHMNAME = rr.ReadDomainName();
-			TIMESIGNED = rr.ReadUInt32() << 32 | rr.ReadUInt32();
-			FUDGE = rr.ReadUInt16();
-			MACSIZE = rr.ReadUInt16();
-			MAC = rr.ReadBytes(MACSIZE);
-			ORIGINALID = rr.ReadUInt16();
-			ERROR = rr.ReadUInt16();
-			OTHERLEN = rr.ReadUInt16();
-			OTHERDATA = rr.ReadBytes(OTHERLEN);
-		}
+    public RecordTSIG(RecordReader rr)
+    {
+        ALGORITHMNAME = rr.ReadDomainName();
+        TIMESIGNED = rr.ReadUInt32() << 32 | rr.ReadUInt32();
+        FUDGE = rr.ReadUInt16();
+        MACSIZE = rr.ReadUInt16();
+        MAC = rr.ReadBytes(MACSIZE);
+        ORIGINALID = rr.ReadUInt16();
+        ERROR = rr.ReadUInt16();
+        OTHERLEN = rr.ReadUInt16();
+        OTHERDATA = rr.ReadBytes(OTHERLEN);
+    }
 
-		public override string ToString()
-		{
-			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-			dateTime = dateTime.AddSeconds(TIMESIGNED);
-			string printDate = dateTime.ToShortDateString() + " " + dateTime.ToShortTimeString();
-			return string.Format("{0} {1} {2} {3} {4}",
-				ALGORITHMNAME,
-				printDate,
-				FUDGE,
-				ORIGINALID,
-				ERROR);
-		}
-
-	}
+    public override string ToString()
+    {
+        var dateTime = DateTime.UnixEpoch.AddSeconds(TIMESIGNED);
+        return $"{ALGORITHMNAME} {dateTime.ToShortDateString()} {dateTime.ToShortTimeString()} {FUDGE} {ORIGINALID} {ERROR}";
+    }
 }

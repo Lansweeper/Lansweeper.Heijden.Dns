@@ -1,8 +1,8 @@
-using Heijden.Dns.Enums;
-using System;
-using Type = Heijden.Dns.Enums.Type;
+using Lansweeper.Heijden.Dns.Enums;
+using Lansweeper.Heijden.Dns.Records;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 #region RFC info
 /*

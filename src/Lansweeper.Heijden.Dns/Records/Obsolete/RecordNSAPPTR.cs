@@ -1,4 +1,5 @@
-using System;
+
+
 /*
  * http://tools.ietf.org/rfc/rfc1348.txt   
 
@@ -37,21 +38,19 @@ using System;
    as a <character-string>.
 
  */
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
 
-namespace Heijden.DNS
+public class RecordNSAPPTR : Record
 {
-	public class RecordNSAPPTR : Record
-	{
-		public string OWNER;
+    public string OWNER { get; set; }
 
-		public RecordNSAPPTR(RecordReader rr)
-		{
-			OWNER = rr.ReadString();
-		}
+    public RecordNSAPPTR(RecordReader rr)
+    {
+        OWNER = rr.ReadString();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0}",OWNER);
-		}
-	}
+    public override string ToString()
+    {
+        return OWNER;
+    }
 }

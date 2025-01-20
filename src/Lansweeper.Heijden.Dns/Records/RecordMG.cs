@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
 3.3.6. MG RDATA format (EXPERIMENTAL)
 
@@ -14,21 +15,17 @@ MGMNAME         A <domain-name> which specifies a mailbox which is a
 
 MG records cause no additional section processing.
 */
-namespace Heijden.DNS
+public class RecordMG : Record
 {
-	public class RecordMG : Record
-	{
-		public string MGMNAME;
+    public string MGMNAME { get; set; }
 
-		public RecordMG(RecordReader rr)
-		{
-			MGMNAME = rr.ReadDomainName();
-		}
+    public RecordMG(RecordReader rr)
+    {
+        MGMNAME = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return MGMNAME;
-		}
-
-	}
+    public override string ToString()
+    {
+        return MGMNAME;
+    }
 }

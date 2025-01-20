@@ -1,4 +1,5 @@
-using System;
+
+
 /*
 3.3.10. NULL RDATA format (EXPERIMENTAL)
 
@@ -14,25 +15,24 @@ NULL records cause no additional section processing.  NULL RRs are not
 allowed in master files.  NULLs are used as placeholders in some
 experimental extensions of the DNS.
 */
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns.Records;
+
+public class RecordNULL : Record
 {
-	public class RecordNULL : Record
-	{
-		public byte[] ANYTHING;
+    public byte[] ANYTHING { get; set; }
 
-		public RecordNULL(RecordReader rr)
-		{
-			rr.Position -= 2;
-			// re-read length
-			ushort RDLENGTH = rr.ReadUInt16();
-			ANYTHING = new byte[RDLENGTH];
-			ANYTHING = rr.ReadBytes(RDLENGTH);
-		}
+    public RecordNULL(RecordReader rr)
+    {
+        rr.Position -= 2;
+        // re-read length
+        var RDLENGTH = rr.ReadUInt16();
+        ANYTHING = new byte[RDLENGTH];
+        ANYTHING = rr.ReadBytes(RDLENGTH);
+    }
 
-		public override string ToString()
-		{
-			return string.Format("...binary data... ({0}) bytes",ANYTHING.Length);
-		}
+    public override string ToString()
+    {
+        return $"...binary data... ({ANYTHING.Length}) bytes";
+    }
 
-	}
 }

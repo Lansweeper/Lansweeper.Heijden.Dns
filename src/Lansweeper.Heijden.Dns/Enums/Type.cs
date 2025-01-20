@@ -1,4 +1,4 @@
-namespace Heijden.Dns.Enums;
+namespace Lansweeper.Heijden.Dns.Enums;
 
 /*
  * 3.2.2. TYPE values
@@ -10,6 +10,7 @@ namespace Heijden.Dns.Enums;
  */
 public enum Type : ushort
 {
+    Unknown = 0,
     A = 1,				// a IPV4 host address
     NS = 2,				// an authoritative name server
     MD = 3,				// a mail destination (Obsolete - use MX)

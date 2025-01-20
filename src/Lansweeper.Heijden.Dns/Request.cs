@@ -1,6 +1,6 @@
-using Heijden.Dns.Enums;
+using Lansweeper.Heijden.Dns.Enums;
 
-namespace Heijden.DNS;
+namespace Lansweeper.Heijden.Dns;
 
 public class Request
 {

@@ -1,4 +1,4 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
 
 /*
 3.3.13. SOA RDATA format
@@ -66,40 +66,29 @@ when the zone is loaded from a master file or via a zone transfer.  The
 reason for this provison is to allow future dynamic update facilities to
 change the SOA RR with known semantics.
 */
-
-namespace Heijden.DNS
+public class RecordSOA : Record
 {
-	public class RecordSOA : Record
-	{
-		public string MNAME;
-		public string RNAME;
-		public uint SERIAL;
-		public uint REFRESH;
-		public uint RETRY;
-		public uint EXPIRE;
-		public uint MINIMUM;
+    public string MNAME { get; set; }
+    public string RNAME { get; set; }
+    public uint SERIAL { get; set; }
+    public uint REFRESH { get; set; }
+    public uint RETRY { get; set; }
+    public uint EXPIRE { get; set; }
+    public uint MINIMUM { get; set; }
 
-		public RecordSOA(RecordReader rr)
-		{
-			MNAME = rr.ReadDomainName();
-			RNAME = rr.ReadDomainName();
-			SERIAL = rr.ReadUInt32();
-			REFRESH = rr.ReadUInt32();
-			RETRY = rr.ReadUInt32();
-			EXPIRE = rr.ReadUInt32();
-			MINIMUM = rr.ReadUInt32();
-		}
+    public RecordSOA(RecordReader rr)
+    {
+        MNAME = rr.ReadDomainName();
+        RNAME = rr.ReadDomainName();
+        SERIAL = rr.ReadUInt32();
+        REFRESH = rr.ReadUInt32();
+        RETRY = rr.ReadUInt32();
+        EXPIRE = rr.ReadUInt32();
+        MINIMUM = rr.ReadUInt32();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3} {4} {5} {6}",
-				MNAME,
-				RNAME,
-				SERIAL,
-				REFRESH,
-				RETRY,
-				EXPIRE,
-				MINIMUM);
-		}
-	}
+    public override string ToString()
+    {
+        return $"{MNAME} {RNAME} {SERIAL} {REFRESH} {RETRY} {EXPIRE} {MINIMUM}";
+    }
 }
