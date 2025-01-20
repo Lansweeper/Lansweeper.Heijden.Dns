@@ -105,13 +105,9 @@ public class Question
         return Encoding.ASCII.GetBytes(sb.ToString());
     }
 
-    public byte[] GetData()
+    public IEnumerable<byte> GetData()
     {
-        var data = new List<byte>();
-        data.AddRange(WriteName(QName));
-        data.AddRange(WriteShort((ushort)QType));
-        data.AddRange(WriteShort((ushort)QClass));
-        return data.ToArray();
+        return WriteName(QName).Concat(WriteShort((ushort)QType)).Concat(WriteShort((ushort)QClass));
     }
 
     private static byte[] WriteShort(ushort sValue)

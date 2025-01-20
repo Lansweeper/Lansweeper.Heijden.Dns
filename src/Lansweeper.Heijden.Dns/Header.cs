@@ -201,16 +201,16 @@ public class Header
     /// <summary>
     /// Represents the header as a byte array
     /// </summary>
-    public byte[] GetData()
+    public IEnumerable<byte> GetData()
     {
-        var arr = new byte[12];
-        Buffer.BlockCopy(GetBytesFromUInt16(ID), 0, arr, 0, 2);
-        Buffer.BlockCopy(GetBytesFromUInt16(Flags), 0, arr, 2, 2);
-        Buffer.BlockCopy(GetBytesFromUInt16(QDCOUNT), 0, arr, 4, 2);
-        Buffer.BlockCopy(GetBytesFromUInt16(ANCOUNT), 0, arr, 6, 2);
-        Buffer.BlockCopy(GetBytesFromUInt16(NSCOUNT), 0, arr, 8, 2);
-        Buffer.BlockCopy(GetBytesFromUInt16(ARCOUNT), 0, arr, 10, 2);
-        return arr;
+        var arr = new[] {ID, Flags, QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT};
+        foreach (var value in arr)
+        {
+            foreach (var b in GetBytesFromUInt16(value))
+            {
+                yield return b;
+            }
+        }
     }
 
     private static byte[] GetBytesFromUInt16(ushort sValue)

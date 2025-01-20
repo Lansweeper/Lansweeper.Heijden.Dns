@@ -12,7 +12,7 @@ internal class HeaderShould
     {
         var fixture = new Fixture();
         var header = fixture.Create<Header>();
-        var bytes = header.GetData();
+        var bytes = header.GetData().ToArray();
 
         var rr = new RecordReader(bytes);
         var header2 = new Header(rr);

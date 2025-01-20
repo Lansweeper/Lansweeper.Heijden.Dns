@@ -13,7 +13,7 @@ internal class QuestionShould
         var fixture = new Fixture();
         var question = fixture.Create<Question>();
         question.QName = "SomeName.With.Dots";
-        var bytes = question.GetData();
+        var bytes = question.GetData().ToArray();
 
         var rr = new RecordReader(bytes);
         var question2 = new Question(rr);
