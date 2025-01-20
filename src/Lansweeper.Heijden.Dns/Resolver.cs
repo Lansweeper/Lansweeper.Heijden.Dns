@@ -7,6 +7,7 @@ using Lansweeper.Heijden.Dns.Enums;
 using Lansweeper.Heijden.Dns.Records;
 using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
+namespace Lansweeper.Heijden.Dns;
 
 /*
  * Network Working Group                                     P. Mockapetris
@@ -16,8 +17,6 @@ using Type = Lansweeper.Heijden.Dns.Enums.Type;
  *           DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION
  *
  */
-
-namespace Lansweeper.Heijden.Dns;
 
 /// <summary>
 /// Resolver is the main class to do DNS query lookups
