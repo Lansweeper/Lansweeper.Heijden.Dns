@@ -1,3 +1,4 @@
+using Heijden.Dns.Enums;
 using System.Buffers.Binary;
 using System.Net;
 

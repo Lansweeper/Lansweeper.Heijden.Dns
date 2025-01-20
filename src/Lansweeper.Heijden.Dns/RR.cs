@@ -1,4 +1,6 @@
+using Heijden.Dns.Enums;
 using System;
+using Type = Heijden.Dns.Enums.Type;
 
 namespace Heijden.DNS;
 
@@ -67,17 +69,17 @@ public class RR
     /// <summary>
     /// The name of the node to which this resource record pertains
     /// </summary>
-    public string NAME;
+    public string NAME { get; set; }
 
     /// <summary>
     /// Specifies type of resource record
     /// </summary>
-    public Type Type;
+    public Type Type { get; set; }
 
     /// <summary>
     /// Specifies type class of resource record, mostly IN but can be CS, CH or HS 
     /// </summary>
-    public Class Class;
+    public Class Class { get; set; }
 
     /// <summary>
     /// Time to live, the time interval that the resource record may be cached
@@ -86,26 +88,26 @@ public class RR
     {
         get
         {
-            return (uint)Math.Max(0, m_TTL - TimeLived);
+            return (uint)Math.Max(0, _ttl - TimeLived);
         }
         set
         {
-            m_TTL = value;
+            _ttl = value;
         }
     }
-    private uint m_TTL;
+    private uint _ttl;
 
     /// <summary>
-    /// 
+    /// Specifies the length in octets of the RDATA field.
     /// </summary>
-    public ushort RDLENGTH;
+    public ushort RDLENGTH { get; set; }
 
     /// <summary>
     /// One of the Record* classes
     /// </summary>
-    public Record RECORD;
+    public Record RECORD { get; set; }
 
-    public int TimeLived;
+    public int TimeLived { get; set; }
 
     public RR(RecordReader rr)
     {
@@ -121,35 +123,12 @@ public class RR
 
     public override string ToString()
     {
-        return string.Format("{0,-32} {1}\t{2}\t{3}\t{4}",
-            NAME,
-            TTL,
-            Class,
-            Type,
-            RECORD);
+        return $"{NAME,-32} {TTL}\t{Class}\t{Type}\t{RECORD}";
     }
 }
 
-public class AnswerRR : RR
-{
-    public AnswerRR(RecordReader br)
-        : base(br)
-    {
-    }
-}
+public class AnswerRR(RecordReader br) : RR(br);
 
-public class AuthorityRR : RR
-{
-    public AuthorityRR(RecordReader br)
-        : base(br)
-    {
-    }
-}
+public class AuthorityRR(RecordReader br) : RR(br);
 
-public class AdditionalRR : RR
-{
-    public AdditionalRR(RecordReader br)
-        : base(br)
-    {
-    }
-}
+public class AdditionalRR(RecordReader br) : RR(br);

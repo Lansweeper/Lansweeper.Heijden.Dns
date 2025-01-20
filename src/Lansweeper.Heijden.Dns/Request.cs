@@ -1,3 +1,5 @@
+using Heijden.Dns.Enums;
+
 namespace Heijden.DNS;
 
 public class Request

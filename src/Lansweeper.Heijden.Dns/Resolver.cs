@@ -3,6 +3,8 @@ using System.Text;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using System.Reflection;
+using Heijden.Dns.Enums;
+using Type = Heijden.Dns.Enums.Type;
 
 
 /*

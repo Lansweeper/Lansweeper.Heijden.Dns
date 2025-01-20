@@ -1,5 +1,6 @@
-using System;
 using System.Text;
+using Type = Heijden.Dns.Enums.Type;
+
 /*
  * http://tools.ietf.org/rfc/rfc2065.txt
  * 
@@ -38,7 +39,7 @@ using System.Text;
  */
 namespace Heijden.DNS
 {
-	public class RecordNXT : Record
+    public class RecordNXT : Record
 	{
 		public string NEXTDOMAINNAME;
 		public byte[] BITMAP;
@@ -67,14 +68,15 @@ namespace Heijden.DNS
 
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder();
-			for (int bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
+			var sb = new StringBuilder();
+			for (var bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
 			{
-				if (IsSet(bitNr))
-					sb.Append(" " + (Type)bitNr);
+                if (IsSet(bitNr))
+                {
+                    sb.Append(" " + (Type)bitNr);
+                }
 			}
-			return string.Format("{0}{1}", NEXTDOMAINNAME, sb.ToString());
+			return $"{NEXTDOMAINNAME}{sb.ToString()}";
 		}
-
 	}
 }

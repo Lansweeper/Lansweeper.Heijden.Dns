@@ -1,5 +1,7 @@
+using Heijden.Dns.Enums;
 using System.Buffers.Binary;
 using System.Text;
+using Type = Heijden.Dns.Enums.Type;
 
 namespace Heijden.DNS;
 

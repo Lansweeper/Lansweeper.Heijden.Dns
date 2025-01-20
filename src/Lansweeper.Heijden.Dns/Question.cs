@@ -1,3 +1,4 @@
+using Heijden.Dns.Enums;
 using System.Net;
 using System.Text;
 

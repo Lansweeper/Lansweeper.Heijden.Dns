@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using Heijden.Dns.Enums;
 using Heijden.DNS;
 
 namespace TestConsoleApp;
