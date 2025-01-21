@@ -65,7 +65,27 @@ jobs:
           root: .
           paths:
             - .
-
+  test:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:8.0
+    steps:
+      - attach_workspace:
+          at: . 
+          
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get install -y libpcap-dev
+      
+      - run:
+          name: "Run Unit Tests"
+          command: dotnet test "<< pipeline.parameters.solution-file >>" --logger:"junit;LogFilePath=/root/project/test-results/JUnit/{assembly}.JUnit.xml"
+          no_output_timeout: 60m
+          
+      - store_test_results:
+          path: /root/project/test-results/
+          
   release:
     executor: node
     steps:
@@ -178,7 +198,15 @@ workflows:
           filters:
             branches:
               ignore: << pipeline.parameters.git-primary-branch >>
-
+      - test:
+          context:
+            - SonarCloud
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: << pipeline.parameters.git-primary-branch >>
+              
   ci_and_release_primary_branch:
     jobs:
       - build:
