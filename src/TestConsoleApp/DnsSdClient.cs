@@ -39,7 +39,7 @@ internal class DnsSdClient : IDisposable
             {
                 sb.AppendLine(res.RECORD.ToString());
 
-                var detailres = await _client.Query(res.RECORD.ToString(), QType.PTR).ConfigureAwait(false);
+                var detailres = await _client.Query(res.RECORD.ToString(), QType.PTR, cancellationToken).ConfigureAwait(false);
 
                 foreach (var resdet in detailres.Answers)
                 {
