@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /* http://tools.ietf.org/rfc/rfc1183.txt
@@ -54,17 +57,17 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 public class RecordRT : Record
 {
-    public ushort PREFERENCE { get; set; }
-    public string INTERMEDIATEHOST { get; set; }
+    public ushort Preference { get; set; }
+    public string IntermediateHost { get; set; }
 
     public RecordRT(RecordReader rr)
     {
-        PREFERENCE = rr.ReadUInt16();
-        INTERMEDIATEHOST = rr.ReadDomainName();
+        Preference = rr.ReadUInt16();
+        IntermediateHost = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{PREFERENCE} {INTERMEDIATEHOST}";
+        return $"{Preference} {IntermediateHost}";
     }
 }

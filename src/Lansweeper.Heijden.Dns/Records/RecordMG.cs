@@ -15,17 +15,12 @@ MGMNAME         A <domain-name> which specifies a mailbox which is a
 
 MG records cause no additional section processing.
 */
-public class RecordMG : Record
+public class RecordMG(RecordReader rr) : Record
 {
-    public string MGMNAME { get; set; }
-
-    public RecordMG(RecordReader rr)
-    {
-        MGMNAME = rr.ReadDomainName();
-    }
+    public string MgmName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return MGMNAME;
+        return MgmName;
     }
 }

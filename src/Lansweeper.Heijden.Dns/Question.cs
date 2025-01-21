@@ -1,5 +1,3 @@
-using System.Net;
-using System.Text;
 using Lansweeper.Heijden.Dns.Enums;
 
 namespace Lansweeper.Heijden.Dns;
@@ -46,77 +44,44 @@ QCLASS          a two octet code that specifies the class of the query.
 
 public class Question
 {
-    private string _qName = string.Empty;
+    private string _name = string.Empty;
 
-    public string QName
+    public string Name
     {
-        get
-        {
-            return _qName;
-        }
+        get => _name;
         set
         {
-            _qName = value;
-            if (!_qName.EndsWith('.'))
+            _name = value;
+            if (!_name.EndsWith('.'))
             {
-                _qName += ".";
+                _name += ".";
             }
         }
     }
-    public QType QType { get; set; }
-    public QClass QClass { get; set; }
+    public QType Type { get; set; }
+    public QClass Class { get; set; }
 
-    public Question(string qName,QType qType,QClass qClass)
+    public Question(string name, QType type, QClass @class)
     {
-        QName = qName;
-        QType = qType;
-        QClass = qClass;
+        Name = name;
+        Type = type;
+        Class = @class;
     }
 
     public Question(RecordReader rr)
     {
-        QName = rr.ReadDomainName();
-        QType = (QType)rr.ReadUInt16();
-        QClass = (QClass)rr.ReadUInt16();
-    }
-
-    private static byte[] WriteName(string src)
-    {
-        if (!src.EndsWith('.'))
-        {
-            src += '.';
-        }
-
-        if (src == ".") return new byte[1];
-
-        var sb = new StringBuilder();
-        int intI, intJ, intLen = src.Length;
-        sb.Append('\0');
-        for (intI = 0, intJ = 0; intI < intLen; intI++, intJ++)
-        {
-            sb.Append(src[intI]);
-            if (src[intI] == '.')
-            {
-                sb[intI - intJ] = (char)(intJ & 0xff);
-                intJ = -1;
-            }
-        }
-        sb[^1] = '\0';
-        return Encoding.ASCII.GetBytes(sb.ToString());
+        Name = rr.ReadDomainName();
+        Type = (QType)rr.ReadUInt16();
+        Class = (QClass)rr.ReadUInt16();
     }
 
     public IEnumerable<byte> GetData()
     {
-        return WriteName(QName).Concat(WriteShort((ushort)QType)).Concat(WriteShort((ushort)QClass));
+        return RecordWriter.WriteName(Name).Concat(RecordWriter.WriteShort((ushort)Type)).Concat(RecordWriter.WriteShort((ushort)Class));
     }
 
-    private static byte[] WriteShort(ushort sValue)
-    {
-        return BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)sValue));
-    }
-        
     public override string ToString()
     {
-        return $"{QName,-32}\t{QClass}\t{QType}";
+        return $"{Name,-32}\t{Class}\t{Type}";
     }
 }

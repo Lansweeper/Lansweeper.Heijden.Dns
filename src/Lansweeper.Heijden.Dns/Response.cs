@@ -13,17 +13,17 @@ public class Response
     /// <summary>
     /// List of AnswerRR records
     /// </summary>
-    public List<AnswerRR> Answers { get; set; } = [];
+    public List<AnswerResourceRecord> Answers { get; set; } = [];
 
     /// <summary>
     /// List of AuthorityRR records
     /// </summary>
-    public List<AuthorityRR> Authorities { get; set; } = [];
+    public List<AuthorityResourceRecord> Authorities { get; set; } = [];
 
     /// <summary>
     /// List of AdditionalRR records
     /// </summary>
-    public List<AdditionalRR> Additionals { get; set; } = [];
+    public List<AdditionalResourceRecord> Additionals { get; set; } = [];
 
     public Header Header { get; set; }
 
@@ -61,36 +61,37 @@ public class Response
 
         Header = new Header(rr);
 
-        for (var intI = 0; intI < Header.QDCOUNT; intI++)
+        for (var intI = 0; intI < Header.QuestionCount; intI++)
         {
             Questions.Add(new Question(rr));
         }
 
-        for (var intI = 0; intI < Header.ANCOUNT; intI++)
+        for (var intI = 0; intI < Header.AnswerCount; intI++)
         {
-            Answers.Add(new AnswerRR(rr));
+            Answers.Add(new AnswerResourceRecord(rr));
         }
 
-        for (var intI = 0; intI < Header.NSCOUNT; intI++)
+        for (var intI = 0; intI < Header.NameServerCount; intI++)
         {
-            Authorities.Add(new AuthorityRR(rr));
+            Authorities.Add(new AuthorityResourceRecord(rr));
         }
-        for (var intI = 0; intI < Header.ARCOUNT; intI++)
+
+        for (var intI = 0; intI < Header.AdditionRecordCount; intI++)
         {
-            Additionals.Add(new AdditionalRR(rr));
+            Additionals.Add(new AdditionalResourceRecord(rr));
         }
     }
 
     /// <summary>
     /// List of records of the given type in Response.Answers
     /// </summary>
-    public IEnumerable<T> GetRecords<T>()
+    public IEnumerable<T> GetRecordsOfType<T>()
     where T: Record
     {
-        return Answers.Select(x => x.RECORD).OfType<T>();
+        return Answers.Select(x => x.Record).OfType<T>();
     }
 
-    public IEnumerable<RR> GetRecordsRR()
+    public IEnumerable<ResourceRecord> GetResourceRecord()
     {
         foreach (var rr in Answers)
         {

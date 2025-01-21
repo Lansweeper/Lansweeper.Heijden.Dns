@@ -1,4 +1,7 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 
+namespace Lansweeper.Heijden.Dns.Records;
 
 /*
  *  http://www.ietf.org/rfc/rfc2782.txt
@@ -63,25 +66,23 @@
         available at this domain.
 
  */
-namespace Lansweeper.Heijden.Dns.Records;
-
 public class RecordSRV : Record
 {
-    public ushort PRIORITY { get; set; }
-    public ushort WEIGHT { get; set; }
-    public ushort PORT { get; set; }
-    public string TARGET { get; set; }
+    public ushort Priority { get; set; }
+    public ushort Weight { get; set; }
+    public ushort Port { get; set; }
+    public string Target { get; set; }
 
     public RecordSRV(RecordReader rr)
     {
-        PRIORITY = rr.ReadUInt16();
-        WEIGHT = rr.ReadUInt16();
-        PORT = rr.ReadUInt16();
-        TARGET = rr.ReadDomainName();
+        Priority = rr.ReadUInt16();
+        Weight = rr.ReadUInt16();
+        Port = rr.ReadUInt16();
+        Target = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{PRIORITY} {WEIGHT} {PORT} {TARGET}";
+        return $"{Priority} {Weight} {Port} {Target}";
     }
 }

@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -33,28 +36,28 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 public class RecordKX : Record, IComparable
 {
-    public ushort PREFERENCE { get; set; }
-    public string EXCHANGER { get; set; }
+    public ushort Preference { get; set; }
+    public string Exchanger { get; set; }
 
     public RecordKX(RecordReader rr)
     {
-        PREFERENCE = rr.ReadUInt16();
-        EXCHANGER = rr.ReadDomainName();
+        Preference = rr.ReadUInt16();
+        Exchanger = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{PREFERENCE} {EXCHANGER}";
+        return $"{Preference} {Exchanger}";
     }
 
     public int CompareTo(object? objA)
     {
         if (objA is not RecordKX recordKX) return -1;
         
-        if (PREFERENCE > recordKX.PREFERENCE) return 1;
-        if (PREFERENCE < recordKX.PREFERENCE) return -1;
+        if (Preference > recordKX.Preference) return 1;
+        if (Preference < recordKX.Preference) return -1;
 
         // they are the same, now compare case-insensitive names
-        return string.Compare(EXCHANGER, recordKX.EXCHANGER, StringComparison.InvariantCultureIgnoreCase);
+        return string.Compare(Exchanger, recordKX.Exchanger, StringComparison.InvariantCultureIgnoreCase);
     }
 }

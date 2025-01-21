@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lansweeper.Heijden.Dns", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lansweeper.Heijden.Dns.Tests", "Lansweeper.Heijden.Dns.Tests\Lansweeper.Heijden.Dns.Tests.csproj", "{049E3A99-B192-437C-AC96-4F9719443121}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "TestConsoleApp\TestConsoleApp\TestConsoleApp.csproj", "{29824D7D-9B3F-4645-94E6-75F6BD60B080}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,18 @@ Global
 		{049E3A99-B192-437C-AC96-4F9719443121}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{049E3A99-B192-437C-AC96-4F9719443121}.Release|x86.ActiveCfg = Release|Any CPU
 		{049E3A99-B192-437C-AC96-4F9719443121}.Release|x86.Build.0 = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Debug|x86.Build.0 = Debug|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|x86.ActiveCfg = Release|Any CPU
+		{29824D7D-9B3F-4645-94E6-75F6BD60B080}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

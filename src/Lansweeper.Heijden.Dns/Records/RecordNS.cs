@@ -24,17 +24,12 @@ with the host, although it is typically a strong hint.  For example,
 hosts which are name servers for either Internet (IN) or Hesiod (HS)
 class information are normally queried using IN class protocols.
  */
-public class RecordNS : Record
+public class RecordNS(RecordReader rr) : Record
 {
-    public string NSDNAME { get; set; }
-
-    public RecordNS(RecordReader rr)
-    {
-        NSDNAME = rr.ReadDomainName();
-    }
+    public string NsdName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return NSDNAME;
+        return NsdName;
     }
 }

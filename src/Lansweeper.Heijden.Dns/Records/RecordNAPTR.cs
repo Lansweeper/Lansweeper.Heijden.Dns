@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -43,25 +46,25 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 public class RecordNAPTR : Record
 {
-    public ushort ORDER { get; set; }
-    public ushort PREFERENCE { get; set; }
-    public string FLAGS { get; set; }
-    public string SERVICES { get; set; }
-    public string REGEXP { get; set; }
-    public string REPLACEMENT { get; set; }
+    public ushort Order { get; set; }
+    public ushort Preference { get; set; }
+    public string Flags { get; set; }
+    public string Services { get; set; }
+    public string RegExp { get; set; }
+    public string Replacement { get; set; }
 
     public RecordNAPTR(RecordReader rr)
     {
-        ORDER = rr.ReadUInt16();
-        PREFERENCE = rr.ReadUInt16();
-        FLAGS = rr.ReadString();
-        SERVICES = rr.ReadString();
-        REGEXP = rr.ReadString();
-        REPLACEMENT = rr.ReadDomainName();
+        Order = rr.ReadUInt16();
+        Preference = rr.ReadUInt16();
+        Flags = rr.ReadString();
+        Services = rr.ReadString();
+        RegExp = rr.ReadString();
+        Replacement = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{ORDER} {PREFERENCE} \"{FLAGS}\" \"{SERVICES}\" \"{REGEXP}\" {REPLACEMENT}";
+        return $"{Order} {Preference} \"{Flags}\" \"{Services}\" \"{RegExp}\" {Replacement}";
     }
 }

@@ -4,7 +4,6 @@ using FluentAssertions;
 namespace Lansweeper.Heijden.Dns.Tests;
 
 [TestFixture, Category("UnitTest"), Parallelizable(ParallelScope.All)]
-
 internal class QuestionShould
 {
     [Test]
@@ -12,7 +11,7 @@ internal class QuestionShould
     {
         var fixture = new Fixture();
         var question = fixture.Create<Question>();
-        question.QName = "SomeName.With.Dots";
+        question.Name = "SomeName.With.Dots";
         var bytes = question.GetData().ToArray();
 
         var rr = new RecordReader(bytes);

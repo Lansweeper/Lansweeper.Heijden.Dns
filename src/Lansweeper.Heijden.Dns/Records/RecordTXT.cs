@@ -1,6 +1,7 @@
 using System.Text;
 
-#region Rfc info
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
 3.3.14. TXT RDATA format
 
@@ -14,28 +15,24 @@ TXT-DATA        One or more <character-string>s.
 
 TXT RRs are used to hold descriptive text.  The semantics of the text
 depends on the domain where it is found.
- * 
 */
-#endregion
-namespace Lansweeper.Heijden.Dns.Records;
-
 public class RecordTXT : Record
 {
-    public List<string> TXT { get; } = [];
+    public List<string> Text { get; } = [];
 
     public RecordTXT(RecordReader rr, int length)
     {
         var pos = rr.Position;
         while ((rr.Position - pos) < length)
         {
-            TXT.Add(rr.ReadString());
+            Text.Add(rr.ReadString());
         }
     }
 
     public override string ToString()
     {
         var stringBuilder = new StringBuilder();
-        foreach (var str in this.TXT)
+        foreach (var str in this.Text)
         {
             stringBuilder.Append($"\"{str}\" ");
         }

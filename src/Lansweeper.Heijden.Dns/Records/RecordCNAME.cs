@@ -21,17 +21,12 @@ the description of name server logic in [RFC-1034] for details.
  * 
  */
 
-public class RecordCNAME : Record
+public class RecordCNAME(RecordReader rr) : Record
 {
-    public string CNAME { get; set; }
-
-    public RecordCNAME(RecordReader rr)
-    {
-        CNAME = rr.ReadDomainName();
-    }
+    public string CanonicalName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return CNAME;
+        return CanonicalName;
     }
 }

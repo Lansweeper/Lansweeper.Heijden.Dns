@@ -1,4 +1,7 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 
+namespace Lansweeper.Heijden.Dns.Records;
 
 /* http://tools.ietf.org/rfc/rfc1183.txt
 
@@ -27,22 +30,18 @@
    For example:
 
    Relay.Prime.COM.  X25       311061700956
-
-
  */
-namespace Lansweeper.Heijden.Dns.Records;
-
 public class RecordX25 : Record
 {
-    public string PSDNADDRESS { get; set; }
+    public string PsdnAddress { get; set; }
 
     public RecordX25(RecordReader rr)
     {
-        PSDNADDRESS = rr.ReadString();
+        PsdnAddress = rr.ReadString();
     }
 
     public override string ToString()
     {
-        return PSDNADDRESS;
+        return PsdnAddress;
     }
 }

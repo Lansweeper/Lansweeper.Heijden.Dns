@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -25,28 +28,28 @@ specified by EXCHANGE.  The use of MX RRs is explained in detail in
 */
 public class RecordMX : Record, IComparable
 {
-    public ushort PREFERENCE { get; set; }
-    public string EXCHANGE { get; set; }
+    public ushort Preference { get; set; }
+    public string Exchange { get; set; }
 
     public RecordMX(RecordReader rr)
     {
-        PREFERENCE = rr.ReadUInt16();
-        EXCHANGE = rr.ReadDomainName();
+        Preference = rr.ReadUInt16();
+        Exchange = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{PREFERENCE} {EXCHANGE}";
+        return $"{Preference} {Exchange}";
     }
 
     public int CompareTo(object? objA)
     {
         if (objA is not RecordMX recordMX) return -1;
 
-        if (PREFERENCE > recordMX.PREFERENCE) return 1;
-        if (PREFERENCE < recordMX.PREFERENCE) return -1;
+        if (Preference > recordMX.Preference) return 1;
+        if (Preference < recordMX.Preference) return -1;
 
         // they are the same, now compare case insensitive names
-        return string.Compare(EXCHANGE, recordMX.EXCHANGE, StringComparison.InvariantCultureIgnoreCase);
+        return string.Compare(Exchange, recordMX.Exchange, StringComparison.InvariantCultureIgnoreCase);
     }
 }

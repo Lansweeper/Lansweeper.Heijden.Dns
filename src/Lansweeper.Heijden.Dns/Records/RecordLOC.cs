@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 using System.Text;
 
 namespace Lansweeper.Heijden.Dns.Records;
@@ -100,26 +103,26 @@ public class RecordLOC : Record
 {
     private const uint Mid = 2147483648; // 2^31
 
-    public byte VERSION { get; set; }
-    public byte SIZE { get; set; }
-    public byte HORIZPRE { get; set; }
-    public byte VERTPRE { get; set; }
-    public uint LATITUDE { get; set; }
-    public uint LONGITUDE { get; set; }
-    public uint ALTITUDE { get; set; }
+    public byte Version { get; set; }
+    public byte Size { get; set; }
+    public byte HorizontalPrecision { get; set; }
+    public byte VerticalPrecision { get; set; }
+    public uint Latitude { get; set; }
+    public uint Longitude { get; set; }
+    public uint Altitude { get; set; }
 
     public RecordLOC(RecordReader rr)
     {
-        VERSION = rr.ReadByte(); // must be 0!
-        SIZE = rr.ReadByte();
-        HORIZPRE = rr.ReadByte();
-        VERTPRE = rr.ReadByte();
-        LATITUDE = rr.ReadUInt32();
-        LONGITUDE = rr.ReadUInt32();
-        ALTITUDE = rr.ReadUInt32();
+        Version = rr.ReadByte(); // must be 0!
+        Size = rr.ReadByte();
+        HorizontalPrecision = rr.ReadByte();
+        VerticalPrecision = rr.ReadByte();
+        Latitude = rr.ReadUInt32();
+        Longitude = rr.ReadUInt32();
+        Altitude = rr.ReadUInt32();
     }
 
-    private string SizeToString(byte s)
+    private static string SizeToString(byte s)
     {
         var strUnit = "cm";
         var intBase = s >> 4;
@@ -146,7 +149,7 @@ public class RecordLOC : Record
         return sb.ToString();
     }
 
-    private string LonToTime(uint r)
+    private static string LonToTime(uint r)
     {
         var dir = 'E';
         if (r > Mid)
@@ -160,7 +163,7 @@ public class RecordLOC : Record
         return $"{(int)h} {(int)m} {s:0.000} {dir}";
     }
 
-    private string ToTime(uint r, char below,char above)
+    private static string ToTime(uint r, char below,char above)
     {
         var dir = '?';
         if (r > Mid)
@@ -179,7 +182,7 @@ public class RecordLOC : Record
         return $"{(int)h} {(int)m} {s:0.000} {dir}";
     }
 
-    private string ToAlt(uint a)
+    private static string ToAlt(uint a)
     {
         var alt = (a / 100.0) - 100000.00;
         return $"{alt:0.00}m";
@@ -187,7 +190,7 @@ public class RecordLOC : Record
 
     public override string ToString()
     {
-        return $"{ToTime(LATITUDE, 'S', 'N')} {ToTime(LONGITUDE, 'W', 'E')} " +
-               $"{ToAlt(ALTITUDE)} {SizeToString(SIZE)} {SizeToString(HORIZPRE)} {SizeToString(VERTPRE)}";
+        return $"{ToTime(Latitude, 'S', 'N')} {ToTime(Longitude, 'W', 'E')} " +
+               $"{ToAlt(Altitude)} {SizeToString(Size)} {SizeToString(HorizontalPrecision)} {SizeToString(VerticalPrecision)}";
     }
 }

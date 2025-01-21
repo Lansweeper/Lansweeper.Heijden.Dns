@@ -126,7 +126,7 @@ public class Header
     /// <summary>
     /// An identifier assigned by the program
     /// </summary>
-    public ushort ID { get; set; }
+    public ushort Id { get; set; }
 
     // internal flag
     private ushort Flags { get; set; }
@@ -134,22 +134,22 @@ public class Header
     /// <summary>
     /// the number of entries in the question section
     /// </summary>
-    public ushort QDCOUNT { get; set; }
+    public ushort QuestionCount { get; set; }
 
     /// <summary>
     /// the number of resource records in the answer section
     /// </summary>
-    public ushort ANCOUNT { get; set; }
+    public ushort AnswerCount { get; set; }
 
     /// <summary>
     /// the number of name server resource records in the authority records section
     /// </summary>
-    public ushort NSCOUNT { get; set; }
+    public ushort NameServerCount { get; set; }
 
     /// <summary>
     /// the number of resource records in the additional records section
     /// </summary>
-    public ushort ARCOUNT { get; set; }
+    public ushort AdditionRecordCount { get; set; }
 
     public Header()
     {
@@ -157,12 +157,12 @@ public class Header
 
     public Header(RecordReader rr)
     {
-        ID = rr.ReadUInt16();
+        Id = rr.ReadUInt16();
         Flags = rr.ReadUInt16();
-        QDCOUNT = rr.ReadUInt16();
-        ANCOUNT = rr.ReadUInt16();
-        NSCOUNT = rr.ReadUInt16();
-        ARCOUNT = rr.ReadUInt16();
+        QuestionCount = rr.ReadUInt16();
+        AnswerCount = rr.ReadUInt16();
+        NameServerCount = rr.ReadUInt16();
+        AdditionRecordCount = rr.ReadUInt16();
     }
         
     private static ushort SetBits(ushort oldValue, int position, int length, bool blnValue)
@@ -203,7 +203,7 @@ public class Header
     /// </summary>
     public IEnumerable<byte> GetData()
     {
-        var arr = new[] {ID, Flags, QDCOUNT, ANCOUNT, NSCOUNT, ARCOUNT};
+        var arr = new[] {Id, Flags, QuestionCount, AnswerCount, NameServerCount, AdditionRecordCount};
         foreach (var value in arr)
         {
             foreach (var b in GetBytesFromUInt16(value))
@@ -221,7 +221,7 @@ public class Header
     /// <summary>
     /// query (false), or a response (true)
     /// </summary>
-    public bool QR
+    public bool IsQuery
     {
         get => GetBits(Flags, 15, 1) == 1;
         set => Flags = SetBits(Flags, 15, 1, value);
@@ -230,7 +230,7 @@ public class Header
     /// <summary>
     /// Specifies kind of query
     /// </summary>
-    public OPCode OPCODE
+    public OPCode OperationCode
     {
         get => (OPCode)GetBits(Flags, 11, 4);
         set => Flags = SetBits(Flags, 11, 4, (ushort)value);
@@ -239,16 +239,16 @@ public class Header
     /// <summary>
     /// Authoritative Answer
     /// </summary>
-    public bool AA
+    public bool AuthoritativeAnswer
     {
         get => GetBits(Flags, 10, 1) == 1;
         set => Flags = SetBits(Flags, 10, 1, value);
     }
 
     /// <summary>
-    /// TrunCation
+    /// Truncation
     /// </summary>
-    public bool TC
+    public bool Truncation
     {
         get => GetBits(Flags, 9, 1) == 1;
         set => Flags = SetBits(Flags, 9, 1, value);
@@ -257,7 +257,7 @@ public class Header
     /// <summary>
     /// Recursion Desired
     /// </summary>
-    public bool RD
+    public bool RecursionDesired
     {
         get => GetBits(Flags, 8, 1) == 1;
         set => Flags = SetBits(Flags, 8, 1, value);
@@ -266,7 +266,7 @@ public class Header
     /// <summary>
     /// Recursion Available
     /// </summary>
-    public bool RA
+    public bool RecursionAvailable
     {
         get => GetBits(Flags, 7, 1) == 1;
         set => Flags = SetBits(Flags, 7, 1, value);
@@ -275,7 +275,7 @@ public class Header
     /// <summary>
     /// Reserved for future use
     /// </summary>
-    public ushort Z
+    public ushort Reserved
     {
         get => GetBits(Flags, 4, 3);
         set => Flags = SetBits(Flags, 4, 3, value);
@@ -284,7 +284,7 @@ public class Header
     /// <summary>
     /// Response code
     /// </summary>
-    public RCode RCODE
+    public RCode ResponseCode
     {
         get => (RCode)GetBits(Flags, 0, 4);
         set => Flags = SetBits(Flags, 0, 4, (ushort)value);

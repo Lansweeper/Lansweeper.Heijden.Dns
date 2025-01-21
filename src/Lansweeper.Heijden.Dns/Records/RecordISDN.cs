@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /* http://tools.ietf.org/rfc/rfc1183.txt
@@ -68,17 +71,17 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 public class RecordISDN : Record
 {
-	public string ISDNADDRESS { get; set; }
-	public string SA { get; set; }
+	public string IsdnAddress { get; set; }
+	public string SubAddress { get; set; }
 
 	public RecordISDN(RecordReader rr)
 	{
-		ISDNADDRESS = rr.ReadString();
-		SA = rr.ReadString();
+		IsdnAddress = rr.ReadString();
+		SubAddress = rr.ReadString();
 	}
 
 	public override string ToString()
 	{
-		return $"{ISDNADDRESS} {SA}";
+		return $"{IsdnAddress} {SubAddress}";
 	}
 }

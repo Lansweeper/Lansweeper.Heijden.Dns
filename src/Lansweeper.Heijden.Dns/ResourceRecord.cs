@@ -64,12 +64,14 @@ RDATA           a variable length string of octets that describes the
 /// <summary>
 /// Resource Record (rfc1034 3.6.)
 /// </summary>
-public class RR
+public abstract class ResourceRecord
 {
+    private uint _ttl;
+
     /// <summary>
     /// The name of the node to which this resource record pertains
     /// </summary>
-    public string NAME { get; set; }
+    public string Name { get; set; }
 
     /// <summary>
     /// Specifies type of resource record
@@ -84,51 +86,44 @@ public class RR
     /// <summary>
     /// Time to live, the time interval that the resource record may be cached
     /// </summary>
-    public uint TTL
+    public uint Ttl
     {
-        get
-        {
-            return (uint)Math.Max(0, _ttl - TimeLived);
-        }
-        set
-        {
-            _ttl = value;
-        }
+        get => (uint)Math.Max(0, _ttl - TimeLived);
+        set => _ttl = value;
     }
-    private uint _ttl;
-
+    
     /// <summary>
     /// Specifies the length in octets of the RDATA field.
     /// </summary>
-    public ushort RDLENGTH { get; set; }
+    public ushort RdLength { get; set; }
 
     /// <summary>
     /// One of the Record* classes
     /// </summary>
-    public Record RECORD { get; set; }
+    public Record Record { get; set; }
 
     public int TimeLived { get; set; }
 
-    public RR(RecordReader rr)
+    protected ResourceRecord(RecordReader rr)
     {
         TimeLived = 0;
-        NAME = rr.ReadDomainName();
+        Name = rr.ReadDomainName();
         Type = (Type)rr.ReadUInt16();
         Class = (Class)rr.ReadUInt16();
-        TTL = rr.ReadUInt32();
-        RDLENGTH = rr.ReadUInt16();
-        RECORD = rr.ReadRecord(Type, RDLENGTH);
-        RECORD.RR = this;
+        Ttl = rr.ReadUInt32();
+        RdLength = rr.ReadUInt16();
+        Record = rr.ReadRecord(Type, RdLength);
+        Record.ResourceRecord = this;
     }
 
     public override string ToString()
     {
-        return $"{NAME,-32} {TTL}\t{Class}\t{Type}\t{RECORD}";
+        return $"{Name,-32} {Ttl}\t{Class}\t{Type}\t{Record}";
     }
 }
 
-public class AnswerRR(RecordReader br) : RR(br);
+public class AnswerResourceRecord(RecordReader rr) : ResourceRecord(rr);
 
-public class AuthorityRR(RecordReader br) : RR(br);
+public class AuthorityResourceRecord(RecordReader rr) : ResourceRecord(rr);
 
-public class AdditionalRR(RecordReader br) : RR(br);
+public class AdditionalResourceRecord(RecordReader rr) : ResourceRecord(rr);

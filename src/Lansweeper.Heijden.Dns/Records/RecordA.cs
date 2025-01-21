@@ -18,14 +18,9 @@ records.
  * 
  */
 
-public class RecordA : Record
+public class RecordA(RecordReader rr) : Record
 {
-    public IPAddress Address { get; set; }
-
-    public RecordA(RecordReader rr)
-    {
-        Address = new IPAddress(rr.ReadSpan(4));
-    }
+    public IPAddress Address { get; set; } = new(rr.ReadSpan(4));
 
     public override string ToString()
     {

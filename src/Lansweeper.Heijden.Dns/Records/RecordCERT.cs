@@ -16,27 +16,25 @@ namespace Lansweeper.Heijden.Dns.Records;
 
 public class RecordCERT : Record
 {
-    public ushort TYPE { get; set; }
-    public ushort KEYTAG { get; set; }  //Format
-    public byte ALGORITHM { get; set; }
-    public string PUBLICKEY { get; set; }
-    public byte[] RAWKEY { get; set; }
+    public ushort Type { get; set; }
+    public ushort KeyTag { get; set; }  //Format
+    public byte Algorithm { get; set; }
+    public string PublicKey { get; set; }
 
     public RecordCERT(RecordReader rr)
     {
         // re-read length
         var RDLENGTH = rr.ReadUInt16(-2);
 
-        TYPE = rr.ReadUInt16();
-        KEYTAG = rr.ReadUInt16();
-        ALGORITHM = rr.ReadByte();
+        Type = rr.ReadUInt16();
+        KeyTag = rr.ReadUInt16();
+        Algorithm = rr.ReadByte();
         var length = RDLENGTH - 5;
-        RAWKEY = rr.ReadBytes(length);
-        PUBLICKEY = Convert.ToBase64String(RAWKEY);
+        PublicKey = Convert.ToBase64String(rr.ReadBytes(length));
     }
 
     public override string ToString()
     {
-        return PUBLICKEY;
+        return PublicKey;
     }
 }

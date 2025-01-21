@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 #region Rfc info
@@ -36,21 +39,21 @@ namespace Lansweeper.Heijden.Dns.Records;
 #endregion
 public class RecordKEY : Record
 {
-	public ushort FLAGS { get; set; }
-	public byte PROTOCOL { get; set; }
-	public byte ALGORITHM { get; set; }
-	public string PUBLICKEY { get; set; }
+	public ushort Flags { get; set; }
+	public byte Protocol { get; set; }
+	public byte Algorithm { get; set; }
+	public string PublicKey { get; set; }
 
 	public RecordKEY(RecordReader rr)
 	{
-		FLAGS = rr.ReadUInt16();
-		PROTOCOL = rr.ReadByte();
-		ALGORITHM = rr.ReadByte();
-		PUBLICKEY = rr.ReadString();
+		Flags = rr.ReadUInt16();
+		Protocol = rr.ReadByte();
+		Algorithm = rr.ReadByte();
+		PublicKey = rr.ReadString();
 	}
 
 	public override string ToString()
 	{
-		return $"{FLAGS} {PROTOCOL} {ALGORITHM} \"{PUBLICKEY}\"";
+		return $"{Flags} {Protocol} {Algorithm} \"{PublicKey}\"";
 	}
 }

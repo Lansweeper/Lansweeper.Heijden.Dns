@@ -11,14 +11,9 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 #endregion
 
-public class RecordAAAA : Record
+public class RecordAAAA(RecordReader rr) : Record
 {
-    public IPAddress Address { get; set; }
-
-    public RecordAAAA(RecordReader rr)
-    {
-        Address = new IPAddress(rr.ReadSpan(16));
-    }
+    public IPAddress Address { get; set; } = new(rr.ReadSpan(16));
 
     public override string ToString()
     {

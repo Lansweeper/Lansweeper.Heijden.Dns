@@ -4,7 +4,6 @@ using FluentAssertions;
 namespace Lansweeper.Heijden.Dns.Tests;
 
 [TestFixture, Category("UnitTest"), Parallelizable(ParallelScope.All)]
-
 internal class HeaderShould
 {
     [Test]

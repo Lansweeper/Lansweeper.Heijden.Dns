@@ -1,6 +1,8 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
-#region Rfc info
 /*
  * http://www.ietf.org/rfc/rfc2535.txt
  * 4.1 SIG RDATA Format
@@ -30,34 +32,33 @@ namespace Lansweeper.Heijden.Dns.Records;
 
 
 */
-#endregion
 public class RecordSIG : Record
 {
-    public UInt16 TYPECOVERED { get; set; }
-    public byte ALGORITHM { get; set; }
-    public byte LABELS { get; set; }
-    public uint ORIGINALTTL { get; set; }
-    public uint SIGNATUREEXPIRATION { get; set; }
-    public uint SIGNATUREINCEPTION { get; set; }
-    public ushort KEYTAG { get; set; }
-    public string SIGNERSNAME { get; set; }
-    public string SIGNATURE { get; set; }
+    public ushort TypeCovered { get; set; }
+    public byte Algorithm { get; set; }
+    public byte Labels { get; set; }
+    public uint OriginalTtl { get; set; }
+    public uint SignatureExpiration { get; set; }
+    public uint SignatureInception { get; set; }
+    public ushort KeyTag { get; set; }
+    public string SignersName { get; set; }
+    public string Signature { get; set; }
 
     public RecordSIG(RecordReader rr)
     {
-        TYPECOVERED = rr.ReadUInt16();
-        ALGORITHM = rr.ReadByte();
-        LABELS = rr.ReadByte();
-        ORIGINALTTL = rr.ReadUInt32();
-        SIGNATUREEXPIRATION = rr.ReadUInt32();
-        SIGNATUREINCEPTION = rr.ReadUInt32();
-        KEYTAG = rr.ReadUInt16();
-        SIGNERSNAME = rr.ReadDomainName();
-        SIGNATURE = rr.ReadString();
+        TypeCovered = rr.ReadUInt16();
+        Algorithm = rr.ReadByte();
+        Labels = rr.ReadByte();
+        OriginalTtl = rr.ReadUInt32();
+        SignatureExpiration = rr.ReadUInt32();
+        SignatureInception = rr.ReadUInt32();
+        KeyTag = rr.ReadUInt16();
+        SignersName = rr.ReadDomainName();
+        Signature = rr.ReadString();
     }
 
     public override string ToString()
     {
-        return $"{TYPECOVERED} {ALGORITHM} {LABELS} {ORIGINALTTL} {SIGNATUREEXPIRATION} {SIGNATUREINCEPTION} {KEYTAG} {SIGNERSNAME} \"{SIGNATURE}\"";
+        return $"{TypeCovered} {Algorithm} {Labels} {OriginalTtl} {SignatureExpiration} {SignatureInception} {KeyTag} {SignersName} \"{Signature}\"";
     }
 }

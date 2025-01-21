@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /* http://tools.ietf.org/rfc/rfc1183.txt
@@ -31,18 +34,17 @@ namespace Lansweeper.Heijden.Dns.Records;
  */
 public class RecordRP : Record
 {
-    public string MBOXDNAME { get; set; }
-    public string TXTDNAME { get; set; }
+    public string MboxName { get; set; }
+    public string txtName { get; set; }
 
     public RecordRP(RecordReader rr)
     {
-        //MBOXDNAME = rr.ReadString();
-        MBOXDNAME = rr.ReadDomainName();
-        TXTDNAME = rr.ReadDomainName();
+        MboxName = rr.ReadDomainName();
+        txtName = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{MBOXDNAME} {TXTDNAME}";
+        return $"{MboxName} {txtName}";
     }
 }

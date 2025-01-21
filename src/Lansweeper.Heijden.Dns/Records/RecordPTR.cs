@@ -1,4 +1,4 @@
-
+namespace Lansweeper.Heijden.Dns.Records;
 
 /*
  3.3.12. PTR RDATA format
@@ -18,19 +18,12 @@ These records are simple data, and don't imply any special processing
 similar to that performed by CNAME, which identifies aliases.  See the
 description of the IN-ADDR.ARPA domain for an example.
  */
-namespace Lansweeper.Heijden.Dns.Records;
-
-public class RecordPTR : Record
+public class RecordPTR(RecordReader rr) : Record
 {
-    public string PTRDNAME { get; set; }
-
-    public RecordPTR(RecordReader rr)
-    {
-        PTRDNAME = rr.ReadDomainName();
-    }
+    public string Name { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return PTRDNAME;
+        return Name;
     }
 }

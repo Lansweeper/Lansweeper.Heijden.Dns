@@ -6,21 +6,23 @@ public class Request
 {
     public Header Header { get; } = new()
     {
-        OPCODE = OPCode.Query,
-        QDCOUNT = 0
+        OperationCode = OPCode.Query,
+        QuestionCount = 0
     };
 
-    private List<Question> Questions { get; } = [];
+    internal List<Question> Questions { get; } = [];
 
     public void AddQuestion(Question question)
     {
         Questions.Add(question);
+        Header.QuestionCount = (ushort)Questions.Count;
     }
 
     public byte[] GetData()
     {
+        Header.QuestionCount = (ushort)Questions.Count;
+
         var data = new List<byte>();
-        Header.QDCOUNT = (ushort)Questions.Count;
         data.AddRange(Header.GetData());
         foreach (var q in Questions)
         {

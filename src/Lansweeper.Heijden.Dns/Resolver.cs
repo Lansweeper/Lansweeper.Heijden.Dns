@@ -148,7 +148,7 @@ public sealed class Resolver : IResolver
             Task.Factory.StartNew(async () =>
             {
                 var response = await Query(value, QType.A);
-                var recordA = response.GetRecords<RecordA>().FirstOrDefault();
+                var recordA = response.GetRecordsOfType<RecordA>().FirstOrDefault();
                 if (recordA is null) return;
 
                 _dnsServers.Clear();
@@ -191,7 +191,7 @@ public sealed class Resolver : IResolver
     {
         if (!_useCache) return null;
 
-        var strKey = $"{question.QClass}-{question.QType}-{question.QName}";
+        var strKey = $"{question.Class}-{question.Type}-{question.Name}";
 
         Response? response = null;
 
@@ -213,11 +213,11 @@ public sealed class Resolver : IResolver
         }
         
         var timeLived = (int)((DateTime.UtcNow.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
-        foreach (var rr in response.GetRecordsRR())
+        foreach (var rr in response.GetResourceRecord())
         {
             rr.TimeLived = timeLived;
             // The TTL property calculates its actual time to live
-            if (rr.TTL == 0) return null; // out of date
+            if (rr.Ttl == 0) return null; // out of date
         }
         return response;
     }
@@ -230,11 +230,11 @@ public sealed class Resolver : IResolver
         if (response.Questions.Count == 0) return;
 
         // Only cached non-error responses
-        if (response.Header.RCODE != RCode.NoError) return;
+        if (response.Header.ResponseCode != RCode.NoError) return;
 
         var question = response.Questions[0];
 
-        var strKey = $"{question.QClass}-{question.QType}-{question.QName}";
+        var strKey = $"{question.Class}-{question.Type}-{question.Name}";
 
         try
         {
@@ -336,12 +336,12 @@ public sealed class Resolver : IResolver
                                         .ConfigureAwait(false);
                         
                         var response = new Response(_dnsServers[intDnsServer], data[..bytesRead]);
-                        if (response.Header.RCODE != RCode.NoError)
+                        if (response.Header.ResponseCode != RCode.NoError)
                         {
                             return response;
                         }
 
-                        if (response.Questions[0].QType != QType.AXFR)
+                        if (response.Questions[0].Type != QType.AXFR)
                         {
                             AddToCache(response);
                             return response;
@@ -363,10 +363,10 @@ public sealed class Resolver : IResolver
 
                         if (intSoa == 2)
                         {
-                            transferResponse.Header.QDCOUNT = (ushort)transferResponse.Questions.Count;
-                            transferResponse.Header.ANCOUNT = (ushort)transferResponse.Answers.Count;
-                            transferResponse.Header.NSCOUNT = (ushort)transferResponse.Authorities.Count;
-                            transferResponse.Header.ARCOUNT = (ushort)transferResponse.Additionals.Count;
+                            transferResponse.Header.QuestionCount = (ushort)transferResponse.Questions.Count;
+                            transferResponse.Header.AnswerCount = (ushort)transferResponse.Answers.Count;
+                            transferResponse.Header.NameServerCount = (ushort)transferResponse.Authorities.Count;
+                            transferResponse.Header.AdditionRecordCount = (ushort)transferResponse.Additionals.Count;
                             transferResponse.MessageSize = intMessageSize;
                             return transferResponse;
                         }
@@ -420,8 +420,8 @@ public sealed class Resolver : IResolver
 
     private async Task<Response> GetResponse(Request request, CancellationToken cancellationToken)
     {
-        request.Header.ID = _unique;
-        request.Header.RD = Recursion;
+        request.Header.Id = _unique;
+        request.Header.RecursionDesired = Recursion;
 
         return TransportType switch
         {
@@ -464,14 +464,14 @@ public sealed class Resolver : IResolver
         var aliases = new HashSet<string>();
         foreach (var answerRR in response.Answers)
         {
-            if (answerRR.RECORD is RecordA recordA)
+            if (answerRR.Record is RecordA recordA)
             {
                 addresses.Add(recordA.Address);
-                entry.HostName = answerRR.NAME;
+                entry.HostName = answerRR.Name;
             }
             else if (answerRR.Type == Type.CNAME)
             {
-                aliases.Add(answerRR.NAME);
+                aliases.Add(answerRR.Name);
             }
         }
         entry.AddressList = [..addresses];
@@ -527,10 +527,10 @@ public sealed class Resolver : IResolver
     public async Task<IPHostEntry> GetHostEntry(IPAddress ip, CancellationToken cancellationToken = default)
     {
         var response = await Query(GetArpaFromIp(ip), QType.PTR, QClass.IN, cancellationToken).ConfigureAwait(false);
-        var recordPTR = response.GetRecords<RecordPTR>().FirstOrDefault();
+        var recordPTR = response.GetRecordsOfType<RecordPTR>().FirstOrDefault();
         return recordPTR is null 
             ? new IPHostEntry() 
-            : await MakeEntry(recordPTR.PTRDNAME, cancellationToken).ConfigureAwait(false);
+            : await MakeEntry(recordPTR.Name, cancellationToken).ConfigureAwait(false);
     }
 
     //// <inheritdoc />

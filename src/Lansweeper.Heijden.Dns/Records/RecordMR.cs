@@ -17,17 +17,12 @@ MR records cause no additional section processing.  The main use for MR
 is as a forwarding entry for a user who has moved to a different
 mailbox.
 */
-public class RecordMR : Record
+public class RecordMR(RecordReader rr) : Record
 {
-    public string NEWNAME { get; set; }
-
-    public RecordMR(RecordReader rr)
-    {
-        NEWNAME = rr.ReadDomainName();
-    }
+    public string NewName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return NEWNAME;
+        return NewName;
     }
 }

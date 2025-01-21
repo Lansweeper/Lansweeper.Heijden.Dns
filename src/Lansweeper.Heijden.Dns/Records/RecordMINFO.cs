@@ -1,3 +1,5 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -34,17 +36,17 @@ with a mailing list.
 
 public class RecordMINFO : Record
 {
-    public string RMAILBX { get; set; }
-    public string EMAILBX { get; set; }
+    public string MailingListMailbox { get; set; }
+    public string ErrorMailbox { get; set; }
 
     public RecordMINFO(RecordReader rr)
     {
-        RMAILBX = rr.ReadDomainName();
-        EMAILBX = rr.ReadDomainName();
+        MailingListMailbox = rr.ReadDomainName();
+        ErrorMailbox = rr.ReadDomainName();
     }
     
     public override string ToString()
     {
-        return $"{RMAILBX} {EMAILBX}";
+        return $"{MailingListMailbox} {ErrorMailbox}";
     }
 }

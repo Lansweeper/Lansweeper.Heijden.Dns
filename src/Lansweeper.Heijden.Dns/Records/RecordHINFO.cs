@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -25,17 +28,17 @@ when talking between machines or operating systems of the same type.
 
 public class RecordHINFO : Record
 {
-    public string CPU { get; set; }
-    public string OS { get; set; }
+    public string Cpu { get; set; }
+    public string Os { get; set; }
 
     public RecordHINFO(RecordReader rr)
     {
-        CPU = rr.ReadString();
-        OS = rr.ReadString();
+        Cpu = rr.ReadString();
+        Os = rr.ReadString();
     }
 
     public override string ToString()
     {
-        return $"CPU={CPU} OS={OS}";
+        return $"CPU={Cpu} OS={Os}";
     }
 }

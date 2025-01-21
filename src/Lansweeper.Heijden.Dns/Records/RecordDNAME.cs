@@ -16,17 +16,12 @@ namespace Lansweeper.Heijden.Dns.Records;
  * 
  */
 
-public class RecordDNAME : Record
+public class RecordDNAME(RecordReader rr) : Record
 {
-    public string TARGET { get; set; }
-
-    public RecordDNAME(RecordReader rr)
-    {
-        TARGET = rr.ReadDomainName();
-    }
+    public string DomainName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return TARGET;
+        return DomainName;
     }
 }

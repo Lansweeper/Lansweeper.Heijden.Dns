@@ -1,4 +1,7 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 
+namespace Lansweeper.Heijden.Dns.Records;
 
 /*
  * http://tools.ietf.org/rfc/rfc2163.txt
@@ -67,24 +70,21 @@
    MAP822 and MAPX400, as <domain-name> elements, must have the final
    "." (root) when they are fully qualified.
  */
-
-namespace Lansweeper.Heijden.Dns.Records;
-
 public class RecordPX : Record
 {
-    public ushort PREFERENCE { get; set; }
-    public string MAP822 { get; set; }
-    public string MAPX400 { get; set; }
+    public ushort Preference { get; set; }
+    public string Map822 { get; set; }
+    public string MapX400 { get; set; }
 
     public RecordPX(RecordReader rr)
     {
-        PREFERENCE = rr.ReadUInt16();
-        MAP822 = rr.ReadDomainName();
-        MAPX400 = rr.ReadDomainName();
+        Preference = rr.ReadUInt16();
+        Map822 = rr.ReadDomainName();
+        MapX400 = rr.ReadDomainName();
     }
 
     public override string ToString()
     {
-        return $"{PREFERENCE} {MAP822} {MAPX400}";
+        return $"{Preference} {Map822} {MapX400}";
     }
 }

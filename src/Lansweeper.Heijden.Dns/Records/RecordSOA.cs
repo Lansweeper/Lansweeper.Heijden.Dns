@@ -1,3 +1,6 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 namespace Lansweeper.Heijden.Dns.Records;
 
 /*
@@ -68,27 +71,27 @@ change the SOA RR with known semantics.
 */
 public class RecordSOA : Record
 {
-    public string MNAME { get; set; }
-    public string RNAME { get; set; }
-    public uint SERIAL { get; set; }
-    public uint REFRESH { get; set; }
-    public uint RETRY { get; set; }
-    public uint EXPIRE { get; set; }
-    public uint MINIMUM { get; set; }
+    public string MName { get; set; }
+    public string RName { get; set; }
+    public uint Serial { get; set; }
+    public uint Refresh { get; set; }
+    public uint Retry { get; set; }
+    public uint Expire { get; set; }
+    public uint Minimum { get; set; }
 
     public RecordSOA(RecordReader rr)
     {
-        MNAME = rr.ReadDomainName();
-        RNAME = rr.ReadDomainName();
-        SERIAL = rr.ReadUInt32();
-        REFRESH = rr.ReadUInt32();
-        RETRY = rr.ReadUInt32();
-        EXPIRE = rr.ReadUInt32();
-        MINIMUM = rr.ReadUInt32();
+        MName = rr.ReadDomainName();
+        RName = rr.ReadDomainName();
+        Serial = rr.ReadUInt32();
+        Refresh = rr.ReadUInt32();
+        Retry = rr.ReadUInt32();
+        Expire = rr.ReadUInt32();
+        Minimum = rr.ReadUInt32();
     }
 
     public override string ToString()
     {
-        return $"{MNAME} {RNAME} {SERIAL} {REFRESH} {RETRY} {EXPIRE} {MINIMUM}";
+        return $"{MName} {RName} {Serial} {Refresh} {Retry} {Expire} {Minimum}";
     }
 }
