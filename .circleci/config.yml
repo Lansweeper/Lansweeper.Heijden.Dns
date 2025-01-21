@@ -75,13 +75,7 @@ jobs:
     steps:
       - attach_workspace:
           at: . 
-          
-      - run:
-          name: Install dependencies
-          command: |
-            apt-get update
-            apt-get install -y libpcap-dev
-      
+                
       - run:
           name: "Run Unit Tests"
           command: dotnet test "<< pipeline.parameters.solution-file >>" --logger:"junit;LogFilePath=/root/project/test-results/JUnit/{assembly}.JUnit.xml"
