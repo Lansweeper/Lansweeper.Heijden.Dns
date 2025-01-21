@@ -9,6 +9,10 @@ parameters:
     type: string
     default: "Lansweeper.Heijden.Dns.csproj"
 
+  solution-file:
+    type: string
+    default: "src/Lansweeper.Heijden.Dns.sln"
+    
   git-primary-branch:
     type: string
     default: "main"
