@@ -92,9 +92,4 @@ public interface IResolver : IDisposable
     /// 		the host specified in hostNameOrAddress. 
     /// </returns>
     Task<IPHostEntry> GetHostEntry(string hostNameOrAddress, CancellationToken cancellationToken = default);
-
-    void LoadRootFile(string strPath);
-
-    /// <inheritdoc />
-    void Dispose();
 }

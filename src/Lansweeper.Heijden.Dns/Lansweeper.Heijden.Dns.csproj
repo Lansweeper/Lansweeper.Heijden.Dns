@@ -22,15 +22,5 @@
 		<Configurations>Debug;Release;Release-nuget</Configurations>
 		<PackageTags>discovery;nuget</PackageTags>
 	</PropertyGroup>
-	
-	<ItemGroup>
-	  <None Remove="Records\totla.txt" />
-	  <None Remove="Root\named_root.txt" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="Records\totla.txt" />
-	  <Content Include="Root\named_root.txt" />
-	</ItemGroup>
 
 </Project>

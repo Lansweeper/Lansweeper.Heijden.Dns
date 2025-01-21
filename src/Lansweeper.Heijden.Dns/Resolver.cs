@@ -23,9 +23,7 @@ namespace Lansweeper.Heijden.Dns;
 /// </summary>
 public sealed class Resolver : IResolver
 {
-    /// <summary>
-    /// Version of this set of routines, when not in a library
-    /// </summary>
+    /// <inheritdoc />
     public string Version { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? string.Empty;
 
     /// <summary>
@@ -105,29 +103,19 @@ public sealed class Resolver : IResolver
         public string Message { get; set; } = message;
     }
     
-    /// <summary>
-    /// Gets or sets timeout in milliseconds
-    /// </summary>
+    /// <inheritdoc />
     public int TimeOut { get; set; }
 
-    /// <summary>
-    /// Gets or sets number of extra attempts before giving up
-    /// </summary>
+    /// <inheritdoc />
     public byte Retries { get; set; }
 
-    /// <summary>
-    /// Gets or set recursion for doing queries
-    /// </summary>
+    /// <inheritdoc />
     public bool Recursion { get; set; }
 
-    /// <summary>
-    /// Gets or sets protocol to use
-    /// </summary>
+    /// <inheritdoc />
     public TransportType TransportType { get; set; }
 
-    /// <summary>
-    /// Gets or sets list of DNS servers to use
-    /// </summary>
+    /// <inheritdoc />
     public IPEndPoint[] DnsServers
     {
         get
@@ -141,9 +129,7 @@ public sealed class Resolver : IResolver
         }
     }
 
-    /// <summary>
-    /// Gets first DNS server address or sets single DNS server to use
-    /// </summary>
+    /// <inheritdoc />
     public string DnsServer
     {
         get
@@ -171,6 +157,7 @@ public sealed class Resolver : IResolver
         }
     }
 
+    /// <inheritdoc />
     public bool UseCache
     {
         get
@@ -186,9 +173,7 @@ public sealed class Resolver : IResolver
         }
     }
 
-    /// <summary>
-    /// Clear the resolver cache
-    /// </summary>
+    /// <inheritdoc />
     public void ClearCache()
     {
         try
@@ -334,8 +319,6 @@ public sealed class Resolver : IResolver
                     var intSoa = 0;
                     var intMessageSize = 0;
 
-                    //Debug.WriteLine("Sending "+ (request.Length+2) + " bytes in "+ sw.ElapsedMilliseconds+" mS");
-
                     while (true)
                     {
                         var intLength = bs.ReadByte() << 8 | bs.ReadByte();
@@ -351,10 +334,8 @@ public sealed class Resolver : IResolver
                         data = new byte[intLength];
                         var bytesRead = await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await bs.ReadAsync(data.AsMemory(), ct), TimeOut, cancellationToken)
                                         .ConfigureAwait(false);
+                        
                         var response = new Response(_dnsServers[intDnsServer], data[..bytesRead]);
-
-                        //Debug.WriteLine("Received "+ (bytesRead+2)+" bytes in "+sw.ElapsedMilliseconds +" mS");
-
                         if (response.Header.RCODE != RCode.NoError)
                         {
                             return response;
@@ -367,7 +348,6 @@ public sealed class Resolver : IResolver
                         }
 
                         // Zone transfer!!
-
                         if (transferResponse.Questions.Count == 0)
                         {
                             transferResponse.Questions.AddRange(response.Questions);
@@ -391,7 +371,7 @@ public sealed class Resolver : IResolver
                             return transferResponse;
                         }
                     }
-                } // try
+                } 
                 catch (SocketException)
                 {
                     continue; // next try
@@ -408,14 +388,7 @@ public sealed class Resolver : IResolver
         return new Response { Error = "Timeout Error" };
     }
 
-    /// <summary>
-    /// Do Query on specified DNS servers
-    /// </summary>
-    /// <param name="name">Name to query</param>
-    /// <param name="qType">Question type</param>
-    /// <param name="qClass">Class type</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response of the query</returns>
+    /// <inheritdoc />
     public async Task<Response> Query(string name, QType qType, QClass qClass, CancellationToken cancellationToken = default)
     {
         var question = new Question(name, qType, qClass);
@@ -430,13 +403,7 @@ public sealed class Resolver : IResolver
         return await GetResponse(request, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Do an QClass=IN Query on specified DNS servers
-    /// </summary>
-    /// <param name="name">Name to query</param>
-    /// <param name="qType">Question type</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Response of the query</returns>
+    /// <inheritdoc />
     public async Task<Response> Query(string name, QType qType, CancellationToken cancellationToken = default)
     {
         var question = new Question(name, qType, QClass.IN);
@@ -556,15 +523,7 @@ public sealed class Resolver : IResolver
         return sb.ToString();
     }
 
-    ///  <summary>
-    /// 		Resolves an IP address to an System.Net.IPHostEntry instance.
-    ///  </summary>
-    ///  <param name="ip">An IP address.</param>
-    ///  <param name="cancellationToken">Cancellation token</param>
-    ///  <returns>
-    /// 		An System.Net.IPHostEntry instance that contains address information about
-    /// 		the host specified in address.
-    /// </returns>
+    /// <inheritdoc />
     public async Task<IPHostEntry> GetHostEntry(IPAddress ip, CancellationToken cancellationToken = default)
     {
         var response = await Query(GetArpaFromIp(ip), QType.PTR, QClass.IN, cancellationToken).ConfigureAwait(false);
@@ -574,99 +533,12 @@ public sealed class Resolver : IResolver
             : await MakeEntry(recordPTR.PTRDNAME, cancellationToken).ConfigureAwait(false);
     }
 
-    ///  <summary>
-    /// 		Resolves a host name or IP address to an System.Net.IPHostEntry instance.
-    ///  </summary>
-    ///  <param name="hostNameOrAddress">The host name or IP address to resolve.</param>
-    ///  <param name="cancellationToken">Cancellation token</param>
-    ///  <returns>
-    /// 		An System.Net.IPHostEntry instance that contains address information about
-    /// 		the host specified in hostNameOrAddress. 
-    /// </returns>
+    //// <inheritdoc />
     public async Task<IPHostEntry> GetHostEntry(string hostNameOrAddress, CancellationToken cancellationToken = default)
     {
         return IPAddress.TryParse(hostNameOrAddress, out var iPAddress) 
             ? await GetHostEntry(iPAddress, cancellationToken).ConfigureAwait(false)
             : await MakeEntry(hostNameOrAddress, cancellationToken).ConfigureAwait(false);
-    }
-
-
-    private enum RRRecordStatus
-    {
-        UNKNOWN,
-        NAME,
-        TTL,
-        CLASS,
-        TYPE,
-        VALUE
-    }
-
-    public void LoadRootFile(string strPath)
-    {
-        using var sr = new StreamReader(strPath);
-        while (!sr.EndOfStream)
-        {
-            var strLine = sr.ReadLine();
-            if (strLine is null) break;
-
-            var intI = strLine.IndexOf(';');
-            if (intI >= 0)
-            {
-                strLine = strLine[..intI];
-            }
-            strLine = strLine.Trim();
-            if (strLine.Length == 0) continue;
-
-            var status = RRRecordStatus.NAME;
-            var name = string.Empty;
-            var ttl = string.Empty;
-            var Class = string.Empty;
-            var type=string.Empty;
-            var value = string.Empty;
-            var strW = string.Empty;
-
-            for (intI = 0; intI < strLine.Length; intI++)
-            {
-                var c = strLine[intI];
-
-                if (c <= ' ' && strW != string.Empty)
-                {
-                    switch (status)
-                    {
-                        case RRRecordStatus.NAME:
-                            name = strW;
-                            status = RRRecordStatus.TTL;
-                            break;
-                        case RRRecordStatus.TTL:
-                            ttl = strW;
-                            status = RRRecordStatus.CLASS;
-                            break;
-                        case RRRecordStatus.CLASS:
-                            Class = strW;
-                            status = RRRecordStatus.TYPE;
-                            break;
-                        case RRRecordStatus.TYPE:
-                            type = strW;
-                            status = RRRecordStatus.VALUE;
-                            break;
-                        case RRRecordStatus.VALUE:
-                            value = strW;
-                            status = RRRecordStatus.UNKNOWN;
-                            break;
-                        default:
-                            break;
-                    }
-                    strW = string.Empty;
-                }
-
-                if (c > ' ')
-                {
-                    strW += c;
-                }
-            }
-
-        }
-        sr.Close();
     }
 
     /// <inheritdoc />
