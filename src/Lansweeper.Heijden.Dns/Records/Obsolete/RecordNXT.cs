@@ -1,6 +1,8 @@
 using System.Text;
 using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
+
 /*
  * http://tools.ietf.org/rfc/rfc2065.txt
  * 
@@ -34,30 +36,26 @@ using Type = Lansweeper.Heijden.Dns.Enums.Type;
    when being transmitted over the network.  The size of the bit map can
    be inferred from the RDLENGTH and the length of the next domain name.
 
-
-
  */
-namespace Lansweeper.Heijden.Dns.Records.Obsolete;
-
 public class RecordNXT : Record
 {
-    public string NEXTDOMAINNAME { get; set; }
-    public byte[] BITMAP { get; set; }
+    public string NextDomainName { get; set; }
+    public byte[] Bitmap { get; set; }
 
     public RecordNXT(RecordReader rr)
     {
         var length = rr.ReadUInt16(-2);
-        NEXTDOMAINNAME = rr.ReadDomainName();
+        NextDomainName = rr.ReadDomainName();
         length -= (ushort)rr.Position;
-        BITMAP = new byte[length];
-        BITMAP = rr.ReadBytes(length);
+        Bitmap = new byte[length];
+        Bitmap = rr.ReadBytes(length);
     }
 
     private bool IsSet(int bitNr)
     {
         var intByte = bitNr / 8;
         var intOffset = bitNr % 8;
-        var b = BITMAP[intByte];
+        var b = Bitmap[intByte];
         var intTest = 1 << intOffset;
         return (b & intTest) != 0;
     }
@@ -66,13 +64,13 @@ public class RecordNXT : Record
     public override string ToString()
     {
         var sb = new StringBuilder();
-        for (var bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
+        for (var bitNr = 1; bitNr < (Bitmap.Length * 8); bitNr++)
         {
             if (IsSet(bitNr))
             {
                 sb.Append(" " + (Type)bitNr);
             }
         }
-        return $"{NEXTDOMAINNAME}{sb.ToString()}";
+        return $"{NextDomainName}{sb.ToString()}";
     }
 }

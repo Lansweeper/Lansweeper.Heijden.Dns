@@ -1,4 +1,7 @@
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
 
 /* 
  * http://tools.ietf.org/rfc/rfc1712.txt
@@ -38,23 +41,21 @@
    length.
 
  */
-namespace Lansweeper.Heijden.Dns.Records.Obsolete;
-
 public class RecordGPOS : Record
 {
-    public string LONGITUDE { get; set; }
-    public string LATITUDE { get; set; }
-    public string ALTITUDE { get; set; }
+    public string Longitude { get; set; }
+    public string Latitude { get; set; }
+    public string Altitude { get; set; }
 
     public RecordGPOS(RecordReader rr)
     {
-        LONGITUDE = rr.ReadString();
-        LATITUDE = rr.ReadString();
-        ALTITUDE = rr.ReadString();
+        Longitude = rr.ReadString();
+        Latitude = rr.ReadString();
+        Altitude = rr.ReadString();
     }
 
     public override string ToString()
     {
-        return $"{LONGITUDE} {LATITUDE} {ALTITUDE}";
+        return $"{Longitude} {Latitude} {Altitude}";
     }
 }

@@ -1,7 +1,6 @@
-
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
 
 /*
- * 
 3.3.5. MF RDATA format (Obsolete)
 
     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -22,19 +21,12 @@ MF is obsolete.  See the definition of MX and [RFC-974] for details ofw
 the new scheme.  The recommended policy for dealing with MD RRs found in
 a master file is to reject them, or to convert them to MX RRs with a
 preference of 10. */
-namespace Lansweeper.Heijden.Dns.Records.Obsolete;
-
-public class RecordMF : Record
+public class RecordMF(RecordReader rr) : Record
 {
-    public string MADNAME { get; set; }
-
-    public RecordMF(RecordReader rr)
-    {
-        MADNAME = rr.ReadDomainName();
-    }
+    public string MadName { get; set; } = rr.ReadDomainName();
 
     public override string ToString()
     {
-        return MADNAME;
+        return MadName;
     }
 }
