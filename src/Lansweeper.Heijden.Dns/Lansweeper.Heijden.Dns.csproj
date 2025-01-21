@@ -22,5 +22,16 @@
 		<Configurations>Debug;Release;Release-nuget</Configurations>
 		<PackageTags>discovery;nuget</PackageTags>
 	</PropertyGroup>
+	
+	<ItemGroup>
+	  <None Include="..\..\LS.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
 
 </Project>
