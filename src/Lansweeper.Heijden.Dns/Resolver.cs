@@ -247,8 +247,6 @@ public sealed class Resolver : IResolver
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using var udpClient = new UdpClient(dnsServer.Address.ToString(), dnsServer.Port);
-                udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
-
                 try
                 {
                     await udpClient.SendAsync(request.GetData(), cancellationToken).ConfigureAwait(false);
@@ -283,8 +281,6 @@ public sealed class Resolver : IResolver
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using var tcpClient = new TcpClient();
-                tcpClient.ReceiveTimeout = TimeOut;
-
                 try
                 {
                     await tcpClient.ConnectAsync(dnsServer.Address, dnsServer.Port, cancellationToken).ConfigureAwait(false);
