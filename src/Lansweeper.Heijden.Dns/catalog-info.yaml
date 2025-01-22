@@ -3,17 +3,20 @@ kind: Component
 metadata:
   name: Lansweeper.Heijden.Dns
   description: A reusable DNS resolver for .NET.
-  version: 1.2.4
+  version: 1.2.5
   annotations:
     github.com/project-slug: Lansweeper/Lansweeper.Heijden.Dns
     sonarqube.org/project-key: Lansweeper_Lansweeper.Heijden.Dns
     circleci.com/project-slug: github/Lansweeper/Lansweeper.Heijden.Dns
+  tags:
+   - discovery
+   - nuget
 spec:
   type: library
   lifecycle: production
   dependsOn:
     - repository:default/Lansweeper.Heijden.Dns
   nuget:
-    version: 1.2.4
+    version: 1.2.5
     targetFrameworks:
       - net8.0
