@@ -1,3 +1,16 @@
+## [1.2.5](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.4...v1.2.5) (2025-01-22)
+
+
+### Bug Fixes
+
+* add nuget and catalog info ([e2dda7f](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/e2dda7f0e1f9338fb2c5c2d818d3654acfe810ee))
+* ci ([f9e21e5](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/f9e21e5f53eb022cfa067cfd7f1c215706fc4f05))
+* Refactor header + add test ([a32100b](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/a32100b15017121b44cd97f3a792ba41bb5eab69))
+* Refactor RecordReader + add unit tests ([dc8ee00](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/dc8ee0039d5e45d130e07b321ec37956c99d8c43))
+* some build warnings ([03a7c4a](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/03a7c4a1bd2968d462686398c734c914f3728326))
+* Timeout logic ([7cb8d6a](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/7cb8d6a5f7861031367de7461554feae5bb71443))
+* Timeout logic ([17a45dd](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/17a45ddb0917774cbe5ba4f5c2c95529ca014ceb))
+
 ## [1.2.4](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.3...v1.2.4) (2025-01-17)
 
 
