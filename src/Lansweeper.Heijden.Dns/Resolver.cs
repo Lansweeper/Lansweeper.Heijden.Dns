@@ -259,7 +259,7 @@ public sealed class Resolver : IResolver
                 }
                 catch (SocketException)
                 {
-                    Verbose($";; Connection to {dnsServer.Address} failed");
+                    Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                     continue; // next try
                 }
                 finally
@@ -278,11 +278,10 @@ public sealed class Resolver : IResolver
     {
         for (var attempt = 0; attempt <= Retries; attempt++)
         {
-            for (var i = 0; i < _dnsServers.Count; i++)
+            foreach (var dnsServer in _dnsServers)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var dnsServer = _dnsServers[i];
                 using var tcpClient = new TcpClient();
                 tcpClient.ReceiveTimeout = TimeOut;
 
@@ -293,7 +292,7 @@ public sealed class Resolver : IResolver
                     if (!tcpClient.Connected)
                     {
                         tcpClient.Close();
-                        Verbose($";; Connection to nameserver {(i + 1)} failed");
+                        Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                         continue;
                     }
 
@@ -314,7 +313,7 @@ public sealed class Resolver : IResolver
                         if (length <= 0)
                         {
                             tcpClient.Close();
-                            Verbose($";; Connection to nameserver {(i + 1)} failed");
+                            Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                             throw new SocketException(); // next try
                         }
 
