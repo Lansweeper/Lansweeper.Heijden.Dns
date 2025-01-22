@@ -1,243 +1,159 @@
-using System;
-using System.Collections.Generic;
+using System.Buffers.Binary;
 using System.Text;
+using Lansweeper.Heijden.Dns.Records;
+using Lansweeper.Heijden.Dns.Records.Obsolete;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns;
+
+public class RecordReader(byte[] data, int position = 0)
 {
-	public class RecordReader
-	{
-		private byte[] m_Data;
-		private int m_Position;
-		public RecordReader(byte[] data)
-		{
-			m_Data = data;
-			m_Position = 0;
-		}
+    public int Position { get; set; } = position;
+        
+    public byte ReadByte()
+    {
+        return Position >= data.Length ? (byte)0 : data[Position++];
+    }
 
-		public int Position
-		{
-			get
-			{
-				return m_Position;
-			}
-			set
-			{
-				m_Position = value;
-			}
-		}
+    public char ReadChar()
+    {
+        return (char)ReadByte();
+    }
 
-		public RecordReader(byte[] data, int Position)
-		{
-			m_Data = data;
-			m_Position = Position;
-		}
+    public ushort ReadUInt16()
+    {
+        return BinaryPrimitives.ReadUInt16BigEndian(ReadSpan(2));
+    }
 
+    public ushort ReadUInt16(int offset)
+    {
+        Position += offset;
+        return ReadUInt16();
+    }
 
-		public byte ReadByte()
-		{
-			if (m_Position >= m_Data.Length)
-				return 0;
-			else
-				return m_Data[m_Position++];
-		}
+    public uint ReadUInt32()
+    {
+        return BinaryPrimitives.ReadUInt32BigEndian(ReadSpan(4));
+    }
 
-		public char ReadChar()
-		{
-			return (char)ReadByte();
-		}
+    public string ReadDomainName()
+    {
+        var name = new StringBuilder();
+        var length = 0;
 
-		public UInt16 ReadUInt16()
-		{
-			return (UInt16)(ReadByte() << 8 | ReadByte());
-		}
+        // get  the length of the first label
+        while ((length = ReadByte()) != 0)
+        {
+            // top 2 bits set denotes domain name compression and to reference elsewhere
+            if ((length & 0xc0) == 0xc0)
+            {
+                // work out the existing domain name, copy this pointer
+                var newRecordReader = new RecordReader(data, (length & 0x3f) << 8 | ReadByte());
+                name.Append(newRecordReader.ReadDomainName());
+                return name.ToString();
+            }
 
-		public UInt16 ReadUInt16(int offset)
-		{
-			m_Position += offset;
-			return ReadUInt16();
-		}
+            // if not using compression, copy a char at a time to the domain name
+            while (length > 0)
+            {
+                name.Append(ReadChar());
+                length--;
+            }
+            name.Append('.');
+        }
 
-		public UInt32 ReadUInt32()
-		{
-			return (UInt32)(ReadUInt16() << 16 | ReadUInt16());
-		}
+        return name.Length == 0 ? "." : name.ToString();
+    }
 
-		public string ReadDomainName()
-		{
-			StringBuilder name = new StringBuilder();
-			int length = 0;
+    public string ReadString()
+    {
+        var length = ReadByte();
+        return Encoding.ASCII.GetString(ReadSpan(length));
+    }
 
-			// get  the length of the first label
-			while ((length = ReadByte()) != 0)
-			{
-				// top 2 bits set denotes domain name compression and to reference elsewhere
-				if ((length & 0xc0) == 0xc0)
-				{
-					// work out the existing domain name, copy this pointer
-					RecordReader newRecordReader = new RecordReader(m_Data, (length & 0x3f) << 8 | ReadByte());
+    public byte[] ReadBytes(int length)
+    {
+        var arr = new byte[length];
+        for (var i = 0; i < length; i++)
+        {
+            arr[i] = ReadByte();
+        }
+        return arr;
+    }
+        
+    public ReadOnlySpan<byte> ReadSpan(int length)
+    {
+        if (Position + length > data.Length) return ReadBytes(length).AsSpan();
 
-					name.Append(newRecordReader.ReadDomainName());
-					return name.ToString();
-				}
+        var result = data.AsSpan(Position, length);
+        Position += length;
+        return result;
+    }
 
-				// if not using compression, copy a char at a time to the domain name
-				while (length > 0)
-				{
-					name.Append(ReadChar());
-					length--;
-				}
-				name.Append('.');
-			}
-			if (name.Length == 0)
-				return ".";
-			else
-				return name.ToString();
-		}
-
-		public string ReadString()
-		{
-			short length = this.ReadByte();
-
-			StringBuilder name = new StringBuilder();
-			for(int intI=0;intI<length;intI++)
-				name.Append(ReadChar());
-			return name.ToString();
-		}
-
-		public byte[] ReadBytes(int intLength)
-		{
-			List<byte> list = new List<byte>();
-			for(int intI=0;intI<intLength;intI++)
-				list.Add(ReadByte());
-			return list.ToArray();
-		}
-
-		public Record ReadRecord(Type type, int Length)
-		{
-			switch (type)
-			{
-				case Type.A:
-					return new RecordA(this);
-				case Type.NS:
-					return new RecordNS(this);
-				case Type.MD:
-					return new RecordMD(this);
-				case Type.MF:
-					return new RecordMF(this);
-				case Type.CNAME:
-					return new RecordCNAME(this);
-				case Type.SOA:
-					return new RecordSOA(this);
-				case Type.MB:
-					return new RecordMB(this);
-				case Type.MG:
-					return new RecordMG(this);
-				case Type.MR:
-					return new RecordMR(this);
-				case Type.NULL:
-					return new RecordNULL(this);
-				case Type.WKS:
-					return new RecordWKS(this);
-				case Type.PTR:
-					return new RecordPTR(this);
-				case Type.HINFO:
-					return new RecordHINFO(this);
-				case Type.MINFO:
-					return new RecordMINFO(this);
-				case Type.MX:
-					return new RecordMX(this);
-				case Type.TXT:
-					return new RecordTXT(this, Length);
-				case Type.RP:
-					return new RecordRP(this);
-				case Type.AFSDB:
-					return new RecordAFSDB(this);
-				case Type.X25:
-					return new RecordX25(this);
-				case Type.ISDN:
-					return new RecordISDN(this);
-				case Type.RT:
-					return new RecordRT(this);
-				case Type.NSAP:
-					return new RecordNSAP(this);
-				case Type.NSAPPTR:
-					return new RecordNSAPPTR(this);
-				case Type.SIG:
-					return new RecordSIG(this);
-				case Type.KEY:
-					return new RecordKEY(this);
-				case Type.PX:
-					return new RecordPX(this);
-				case Type.GPOS:
-					return new RecordGPOS(this);
-				case Type.AAAA:
-					return new RecordAAAA(this);
-				case Type.LOC:
-					return new RecordLOC(this);
-				case Type.NXT:
-					return new RecordNXT(this);
-				case Type.EID:
-					return new RecordEID(this);
-				case Type.NIMLOC:
-					return new RecordNIMLOC(this);
-				case Type.SRV:
-					return new RecordSRV(this);
-				case Type.ATMA:
-					return new RecordATMA(this);
-				case Type.NAPTR:
-					return new RecordNAPTR(this);
-				case Type.KX:
-					return new RecordKX(this);
-				case Type.CERT:
-					return new RecordCERT(this);
-				case Type.A6:
-					return new RecordA6(this);
-				case Type.DNAME:
-					return new RecordDNAME(this);
-				case Type.SINK:
-					return new RecordSINK(this);
-				case Type.OPT:
-					return new RecordOPT(this);
-				case Type.APL:
-					return new RecordAPL(this);
-				case Type.DS:
-					return new RecordDS(this);
-				case Type.SSHFP:
-					return new RecordSSHFP(this);
-				case Type.IPSECKEY:
-					return new RecordIPSECKEY(this);
-				case Type.RRSIG:
-					return new RecordRRSIG(this);
-				case Type.NSEC:
-					return new RecordNSEC(this);
-				case Type.DNSKEY:
-					return new RecordDNSKEY(this);
-				case Type.DHCID:
-					return new RecordDHCID(this);
-				case Type.NSEC3:
-					return new RecordNSEC3(this);
-				case Type.NSEC3PARAM:
-					return new RecordNSEC3PARAM(this);
-				case Type.HIP:
-					return new RecordHIP(this);
-				case Type.SPF:
-					return new RecordSPF(this);
-				case Type.UINFO:
-					return new RecordUINFO(this);
-				case Type.UID:
-					return new RecordUID(this);
-				case Type.GID:
-					return new RecordGID(this);
-				case Type.UNSPEC:
-					return new RecordUNSPEC(this);
-				case Type.TKEY:
-					return new RecordTKEY(this);
-				case Type.TSIG:
-					return new RecordTSIG(this);
-				default:
-					return new RecordUnknown(this);
-			}
-		}
-
-	}
+    public Record ReadRecord(Type type, int length)
+    {
+        return type switch
+        {
+            Type.A => new RecordA(this),
+            Type.NS => new RecordNS(this),
+            Type.MD => new RecordMD(this),
+            Type.MF => new RecordMF(this),
+            Type.CNAME => new RecordCNAME(this),
+            Type.SOA => new RecordSOA(this),
+            Type.MB => new RecordMB(this),
+            Type.MG => new RecordMG(this),
+            Type.MR => new RecordMR(this),
+            Type.NULL => new RecordNULL(this),
+            Type.WKS => new RecordWKS(this),
+            Type.PTR => new RecordPTR(this),
+            Type.HINFO => new RecordHINFO(this),
+            Type.MINFO => new RecordMINFO(this),
+            Type.MX => new RecordMX(this),
+            Type.TXT => new RecordTXT(this, length),
+            Type.RP => new RecordRP(this),
+            Type.AFSDB => new RecordAFSDB(this),
+            Type.X25 => new RecordX25(this),
+            Type.ISDN => new RecordISDN(this),
+            Type.RT => new RecordRT(this),
+            Type.NSAP => new RecordNSAP(this),
+            Type.NSAPPTR => new RecordNSAPPTR(this),
+            Type.SIG => new RecordSIG(this),
+            Type.KEY => new RecordKEY(this),
+            Type.PX => new RecordPX(this),
+            Type.GPOS => new RecordGPOS(this),
+            Type.AAAA => new RecordAAAA(this),
+            Type.LOC => new RecordLOC(this),
+            Type.NXT => new RecordNXT(this),
+            Type.EID => new RecordUnknown(this, type),
+            Type.NIMLOC => new RecordUnknown(this, type),
+            Type.SRV => new RecordSRV(this),
+            Type.ATMA => new RecordUnknown(this, type),
+            Type.NAPTR => new RecordNAPTR(this),
+            Type.KX => new RecordKX(this),
+            Type.CERT => new RecordCERT(this),
+            Type.A6 => new RecordUnknown(this, type),
+            Type.DNAME => new RecordDNAME(this),
+            Type.SINK => new RecordUnknown(this, type),
+            Type.OPT => new RecordUnknown(this, type),
+            Type.APL => new RecordUnknown(this, type),
+            Type.DS => new RecordDS(this),
+            Type.SSHFP => new RecordUnknown(this, type),
+            Type.IPSECKEY => new RecordUnknown(this, type),
+            Type.RRSIG => new RecordUnknown(this, type),
+            Type.NSEC => new RecordUnknown(this, type),
+            Type.DNSKEY => new RecordUnknown(this, type),
+            Type.DHCID => new RecordUnknown(this, type),
+            Type.NSEC3 => new RecordUnknown(this, type),
+            Type.NSEC3PARAM => new RecordUnknown(this, type),
+            Type.HIP => new RecordUnknown(this, type),
+            Type.SPF => new RecordUnknown(this, type),
+            Type.UINFO => new RecordUnknown(this, type),
+            Type.UID => new RecordUnknown(this, type),
+            Type.GID => new RecordUnknown(this, type),
+            Type.UNSPEC => new RecordUnknown(this, type),
+            Type.TKEY => new RecordTKEY(this),
+            Type.TSIG => new RecordTSIG(this),
+            _ => new RecordUnknown(this, Type.Unknown)
+        };
+    }
 }

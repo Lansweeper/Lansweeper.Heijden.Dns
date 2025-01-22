@@ -1,8 +1,8 @@
-using System;
-using System.Text;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://tools.ietf.org/rfc/rfc3658.txt
- * 
+ *
 2.4.  Wire Format of the DS record
 
    The DS (type=43) record contains these fields: key tag, algorithm,
@@ -28,37 +28,25 @@ using System.Text;
 
  */
 
-namespace Heijden.DNS
+public class RecordDS : Record
 {
-	public class RecordDS : Record
-	{
-		public UInt16 KEYTAG;
-		public byte ALGORITHM;
-		public byte DIGESTTYPE;
-		public byte[] DIGEST;
+    public ushort KeyTag { get; set; }
+    public byte Algorithm { get; set; }
+    public byte DigestType { get; set; }
+    public string Digest { get; set; }
 
-		public RecordDS(RecordReader rr)
-		{
-			ushort length = rr.ReadUInt16(-2);
-			KEYTAG = rr.ReadUInt16();
-			ALGORITHM = rr.ReadByte();
-			DIGESTTYPE = rr.ReadByte();
-			length -= 4;
-			DIGEST = new byte[length];
-			DIGEST = rr.ReadBytes(length);
-		}
+    public RecordDS(RecordReader rr)
+    {
+        var length = rr.ReadUInt16(-2);
+        KeyTag = rr.ReadUInt16();
+        Algorithm = rr.ReadByte();
+        DigestType = rr.ReadByte();
+        length -= 4;
+        Digest = Convert.ToBase64String(rr.ReadBytes(length));
+    }
 
-		public override string ToString()
-		{
-			StringBuilder sb = new StringBuilder();
-			for (int intI = 0; intI < DIGEST.Length; intI++)
-				sb.AppendFormat("{0:x2}", DIGEST[intI]);
-			return string.Format("{0} {1} {2} {3}",
-				KEYTAG,
-				ALGORITHM,
-				DIGESTTYPE,
-				sb.ToString());
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{KeyTag} {Algorithm} {DigestType} {Digest}";
+    }
 }

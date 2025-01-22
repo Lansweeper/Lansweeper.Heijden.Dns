@@ -9,17 +9,18 @@ parameters:
     type: string
     default: "Lansweeper.Heijden.Dns.csproj"
 
+  solution-file:
+    type: string
+    default: "src/Lansweeper.Heijden.Dns.sln"
+    
   git-primary-branch:
     type: string
-    default: "master"
+    default: "main"
 
 executors:
   node:
     docker:
       - image: cimg/node:18.9.0
-
-orbs:
-  win: circleci/windows@5.0
 
 commands:
   nuget-prepare:
@@ -28,19 +29,18 @@ commands:
       - run:
           name: Create local nuget config file
           command: |
-            $xml = "<?xml version='1.0' encoding='utf-8'?>
+            echo "<?xml version='1.0' encoding='utf-8'?>
             <configuration>
               <packageSources>
                 <add key='github' value='https://nuget.pkg.github.com/Lansweeper/index.json' />
               </packageSources>
               <packageSourceCredentials>
                 <github>
-                  <add key='Username' value='$env:GITHUB_USER' />
-                  <add key='ClearTextPassword' value='$env:GITHUB_TOKEN' />
+                  <add key='Username' value='$GITHUB_USER' />
+                  <add key='ClearTextPassword' value='$GITHUB_TOKEN' />
                 </github>
               </packageSourceCredentials>
-            </configuration>"
-            Out-File -FilePath nuget.config -InputObject $xml -Encoding ASCII
+            </configuration>" >> nuget.config
 
   install-deps:
     description: "Install and cache dependencies"
@@ -48,16 +48,17 @@ commands:
       # Download and cache dependencies
       - restore_cache:
           keys:
-            - << pipeline.parameters.project-folder >>-dependencies-{{ checksum "yarn.lock" }}
+            - << pipeline.parameters.project-folder >>1-dependencies-{{ checksum "yarn.lock" }}
       - run: yarn install --pure-lockfile
       - save_cache:
           paths:
             - node_modules
-          key: << pipeline.parameters.project-folder >>-dependencies-{{ checksum "yarn.lock" }}
+          key: << pipeline.parameters.project-folder >>1-dependencies-{{ checksum "yarn.lock" }}
 
 jobs:
   build:
-    executor: win/default
+    docker: 
+        - image: mcr.microsoft.com/dotnet/sdk:8.0
 
     steps:
       - checkout
@@ -68,7 +69,21 @@ jobs:
           root: .
           paths:
             - .
-
+  test:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:8.0
+    steps:
+      - attach_workspace:
+          at: . 
+                
+      - run:
+          name: "Run Unit Tests"
+          command: dotnet test "<< pipeline.parameters.solution-file >>" --logger:"junit;LogFilePath=/root/project/test-results/JUnit/{assembly}.JUnit.xml"
+          no_output_timeout: 60m
+          
+      - store_test_results:
+          path: /root/project/test-results/
+          
   release:
     executor: node
     steps:
@@ -77,15 +92,7 @@ jobs:
       - run: git config user.email "development@lansweeper.com"
       - run: git config user.name "circleCI-automated-commit"
       - install-deps
-      - run:
-          name: install dotnet SDK
-          command: |
-            wget https://packages.microsoft.com/config/ubuntu/23.10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-            sudo dpkg -i packages-microsoft-prod.deb
-            sudo apt-get update; \
-            sudo apt-get install -y apt-transport-https && \
-            sudo apt-get update && \
-            sudo apt-get install -y dotnet-sdk-8.0
+      
       - run:
           name: Increase version with semantic-release
           command: yarn run release
@@ -96,21 +103,42 @@ jobs:
 
       - run:
           name: Replace nuspec version string with next release
-          command: sed -i -E 's/<version>/<version>$VERSION/' src/Lansweeper.Heijden.Dns.nuspec
-
-      - run:
-          name: Pack the nuget
-          command: dotnet pack << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release
-
-      - run:
-          name: Push the nuget
-          command: dotnet nuget push << pipeline.parameters.project-folder >>bin/Release/Lansweeper.Heijden.Dns.$VERSION.nupkg --source "github" --api-key $GITHUB_TOKEN
+          command: sed -i -E 's/<Version>/<Version>'"$VERSION"'/' << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >>
 
       - persist_to_workspace:
           root: .
           paths:
             - .
 
+  publish_nuget_package:
+    docker: 
+        - image: mcr.microsoft.com/dotnet/sdk:8.0
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: copy readme
+          command: |
+            cp README.md << pipeline.parameters.project-folder >>
+      - run:
+          name: Pack the nuget
+          command: dotnet pack << pipeline.parameters.project-folder >><< pipeline.parameters.csproj-file >> --configuration Release
+
+      - run:
+          name: install jq
+          command: apt update && apt install jq -y
+
+      - run:
+          name: Push the nuget
+          command: |
+              VERSION=$(cat package.json | jq --raw-output '.version')
+              dotnet nuget push << pipeline.parameters.project-folder >>bin/Release/Lansweeper.Heijden.Dns.$VERSION.nupkg --source "github" --api-key $GITHUB_TOKEN
+              
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+            
   update_catalog_info:
     docker: 
         - image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -168,7 +196,15 @@ workflows:
           filters:
             branches:
               ignore: << pipeline.parameters.git-primary-branch >>
-
+      - test:
+          context:
+            - SonarCloud
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: << pipeline.parameters.git-primary-branch >>
+              
   ci_and_release_primary_branch:
     jobs:
       - build:
@@ -186,12 +222,21 @@ workflows:
           filters:
             branches:
               only: << pipeline.parameters.git-primary-branch >>
-              
+
+      - publish_nuget_package:
+          context:
+            - lec-github-packages-rw
+          requires:
+            - release
+          filters:
+            branches:
+              only: << pipeline.parameters.git-primary-branch >>
+      
       - update_catalog_info:
           context:
             - lec-github-release
           requires:
-            - release
+            - publish_nuget_package
           filters:
             branches:
               only: << pipeline.parameters.git-primary-branch >>

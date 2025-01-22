@@ -1,5 +1,8 @@
-using System;
 using System.Text;
+using Type = Lansweeper.Heijden.Dns.Enums.Type;
+
+namespace Lansweeper.Heijden.Dns.Records.Obsolete;
+
 /*
  * http://tools.ietf.org/rfc/rfc2065.txt
  * 
@@ -33,48 +36,41 @@ using System.Text;
    when being transmitted over the network.  The size of the bit map can
    be inferred from the RDLENGTH and the length of the next domain name.
 
-
-
  */
-namespace Heijden.DNS
+public class RecordNXT : Record
 {
-	public class RecordNXT : Record
-	{
-		public string NEXTDOMAINNAME;
-		public byte[] BITMAP;
+    public string NextDomainName { get; set; }
+    public byte[] Bitmap { get; set; }
 
-		public RecordNXT(RecordReader rr)
-		{
-			ushort length = rr.ReadUInt16(-2);
-			NEXTDOMAINNAME = rr.ReadDomainName();
-			length -= (ushort)rr.Position;
-			BITMAP = new byte[length];
-			BITMAP = rr.ReadBytes(length);
-		}
+    public RecordNXT(RecordReader rr)
+    {
+        var length = rr.ReadUInt16(-2);
+        NextDomainName = rr.ReadDomainName();
+        length -= (ushort)rr.Position;
+        Bitmap = new byte[length];
+        Bitmap = rr.ReadBytes(length);
+    }
 
-		private bool IsSet(int bitNr)
-		{
-			int intByte = (int)(bitNr / 8);
-			int intOffset = (bitNr % 8);
-			byte b = BITMAP[intByte];
-			int intTest = 1 << intOffset;
-			if ((b & intTest) == 0)
-				return false;
-			else
-				return true;
-		}
+    private bool IsSet(int bitNr)
+    {
+        var intByte = bitNr / 8;
+        var intOffset = bitNr % 8;
+        var b = Bitmap[intByte];
+        var intTest = 1 << intOffset;
+        return (b & intTest) != 0;
+    }
 
 
-		public override string ToString()
-		{
-			StringBuilder sb = new StringBuilder();
-			for (int bitNr = 1; bitNr < (BITMAP.Length * 8); bitNr++)
-			{
-				if (IsSet(bitNr))
-					sb.Append(" " + (Type)bitNr);
-			}
-			return string.Format("{0}{1}", NEXTDOMAINNAME, sb.ToString());
-		}
-
-	}
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        for (var bitNr = 1; bitNr < (Bitmap.Length * 8); bitNr++)
+        {
+            if (IsSet(bitNr))
+            {
+                sb.Append(" " + (Type)bitNr);
+            }
+        }
+        return $"{NextDomainName}{sb.ToString()}";
+    }
 }

@@ -1,4 +1,8 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://tools.ietf.org/rfc/rfc2930.txt
  * 
@@ -20,43 +24,33 @@ using System;
        Other Data:  octet-stream  undefined by this specification
 
  */
-
-namespace Heijden.DNS
+public class RecordTKEY : Record
 {
-	public class RecordTKEY : Record
-	{
-		public string ALGORITHM;
-		public UInt32 INCEPTION;
-		public UInt32 EXPIRATION;
-		public UInt16 MODE;
-		public UInt16 ERROR;
-		public UInt16 KEYSIZE;
-		public byte[] KEYDATA;
-		public UInt16 OTHERSIZE;
-		public byte[] OTHERDATA;
+    public string Algorithm { get; set; }
+    public uint Inception { get; set; }
+    public uint Expiration { get; set; }
+    public ushort Mode { get; set; }
+    public ushort Error { get; set; }
+    public ushort KeySize { get; set; }
+    public byte[] KeyData { get; set; }
+    public ushort OtherSize { get; set; }
+    public byte[] OtherData { get; set; }
 
-		public RecordTKEY(RecordReader rr)
-		{
-			ALGORITHM = rr.ReadDomainName();
-			INCEPTION = rr.ReadUInt32();
-			EXPIRATION = rr.ReadUInt32();
-			MODE = rr.ReadUInt16();
-			ERROR = rr.ReadUInt16();
-			KEYSIZE = rr.ReadUInt16();
-			KEYDATA = rr.ReadBytes(KEYSIZE);
-			OTHERSIZE = rr.ReadUInt16();
-			OTHERDATA = rr.ReadBytes(OTHERSIZE);
-		}
+    public RecordTKEY(RecordReader rr)
+    {
+        Algorithm = rr.ReadDomainName();
+        Inception = rr.ReadUInt32();
+        Expiration = rr.ReadUInt32();
+        Mode = rr.ReadUInt16();
+        Error = rr.ReadUInt16();
+        KeySize = rr.ReadUInt16();
+        KeyData = rr.ReadBytes(KeySize);
+        OtherSize = rr.ReadUInt16();
+        OtherData = rr.ReadBytes(OtherSize);
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3} {4}",
-				ALGORITHM,
-				INCEPTION,
-				EXPIRATION,
-				MODE,
-				ERROR);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{Algorithm} {Inception} {Expiration} {Mode} {Error}";
+    }
 }

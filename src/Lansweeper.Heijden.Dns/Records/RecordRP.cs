@@ -1,4 +1,8 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
+namespace Lansweeper.Heijden.Dns.Records;
+
 /* http://tools.ietf.org/rfc/rfc1183.txt
 
 2.2. The Responsible Person RR
@@ -28,27 +32,19 @@ using System;
    and no associated TXT RR exists.
 
  */
-
-namespace Heijden.DNS
+public class RecordRP : Record
 {
-	public class RecordRP : Record
-	{
-		public string MBOXDNAME;
-		public string TXTDNAME;
+    public string MboxName { get; set; }
+    public string txtName { get; set; }
 
-		public RecordRP(RecordReader rr)
-		{
-			//MBOXDNAME = rr.ReadString();
-			MBOXDNAME = rr.ReadDomainName();
-			TXTDNAME = rr.ReadDomainName();
-		}
+    public RecordRP(RecordReader rr)
+    {
+        MboxName = rr.ReadDomainName();
+        txtName = rr.ReadDomainName();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1}",
-				MBOXDNAME,
-				TXTDNAME);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{MboxName} {txtName}";
+    }
 }

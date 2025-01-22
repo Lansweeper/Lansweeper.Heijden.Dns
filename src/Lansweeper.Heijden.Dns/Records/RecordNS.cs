@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  3.3.11. NS RDATA format
 
@@ -23,21 +24,12 @@ with the host, although it is typically a strong hint.  For example,
 hosts which are name servers for either Internet (IN) or Hesiod (HS)
 class information are normally queried using IN class protocols.
  */
-namespace Heijden.DNS
+public class RecordNS(RecordReader rr) : Record
 {
-	public class RecordNS : Record
-	{
-		public string NSDNAME;
+    public string NsdName { get; set; } = rr.ReadDomainName();
 
-		public RecordNS(RecordReader rr)
-		{
-			NSDNAME = rr.ReadDomainName();
-		}
-
-		public override string ToString()
-		{
-			return NSDNAME;
-		}
-
-	}
+    public override string ToString()
+    {
+        return NsdName;
+    }
 }

@@ -1,4 +1,8 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
+namespace Lansweeper.Heijden.Dns.Records;
+
 /* http://tools.ietf.org/rfc/rfc1183.txt
 
 3.2. The ISDN RR
@@ -64,28 +68,20 @@ using System;
    connected to the ISDN may be able to use both the X25 and ISDN
    addresses, with the local prefix added.
 
-
  */
-
-namespace Heijden.DNS
+public class RecordISDN : Record
 {
-	public class RecordISDN : Record
+	public string IsdnAddress { get; set; }
+	public string SubAddress { get; set; }
+
+	public RecordISDN(RecordReader rr)
 	{
-		public string ISDNADDRESS;
-		public string SA;
+		IsdnAddress = rr.ReadString();
+		SubAddress = rr.ReadString();
+	}
 
-		public RecordISDN(RecordReader rr)
-		{
-			ISDNADDRESS = rr.ReadString();
-			SA = rr.ReadString();
-		}
-
-		public override string ToString()
-		{
-			return string.Format("{0} {1}",
-				ISDNADDRESS,
-				SA);
-		}
-
+	public override string ToString()
+	{
+		return $"{IsdnAddress} {SubAddress}";
 	}
 }

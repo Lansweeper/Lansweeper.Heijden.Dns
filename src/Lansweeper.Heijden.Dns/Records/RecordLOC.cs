@@ -1,5 +1,10 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 using System.Text;
+
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://www.ietf.org/rfc/rfc1876.txt
  * 
@@ -94,106 +99,98 @@ ALTITUDE     The altitude of the center of the sphere described by the
              height values relative to the [WGS 84] ellipsoid.
 
  */
-
-namespace Heijden.DNS
+public class RecordLOC : Record
 {
-	public class RecordLOC : Record
-	{
-		public byte VERSION;
-		public byte SIZE;
-		public byte HORIZPRE;
-		public byte VERTPRE;
-		public UInt32 LATITUDE;
-		public UInt32 LONGITUDE;
-		public UInt32 ALTITUDE;
+    private const uint Mid = 2147483648; // 2^31
 
-		private string SizeToString(byte s)
-		{
-			string strUnit = "cm";
-			int intBase = s >> 4;
-			int intPow = s & 0x0f;
-			if (intPow >= 2)
-			{
-				intPow -= 2;
-				strUnit = "m";
-			}
-			/*
-			if (intPow >= 3)
-			{
-				intPow -= 3;
-				strUnit = "km";
-			}
-			*/
-			StringBuilder sb = new StringBuilder();
-			sb.AppendFormat("{0}", intBase);
-			for (; intPow > 0; intPow--)
-				sb.Append('0');
-			sb.Append(strUnit);
-			return sb.ToString();
-		}
+    public byte Version { get; set; }
+    public byte Size { get; set; }
+    public byte HorizontalPrecision { get; set; }
+    public byte VerticalPrecision { get; set; }
+    public uint Latitude { get; set; }
+    public uint Longitude { get; set; }
+    public uint Altitude { get; set; }
 
-		private string LonToTime(UInt32 r)
-		{
-			UInt32 Mid = 2147483648; // 2^31
-			char Dir = 'E';
-			if (r > Mid)
-			{
-				Dir = 'W';
-				r -= Mid;
-			}
-			double h = r / (360000.0 * 10.0);
-			double m = 60.0 * (h - (int)h);
-			double s = 60.0 * (m - (int)m);
-			return string.Format("{0} {1} {2:0.000} {3}", (int)h, (int)m, s, Dir);
-		}
+    public RecordLOC(RecordReader rr)
+    {
+        Version = rr.ReadByte(); // must be 0!
+        Size = rr.ReadByte();
+        HorizontalPrecision = rr.ReadByte();
+        VerticalPrecision = rr.ReadByte();
+        Latitude = rr.ReadUInt32();
+        Longitude = rr.ReadUInt32();
+        Altitude = rr.ReadUInt32();
+    }
 
-		private string ToTime(UInt32 r, char Below,char Above)
-		{
-			UInt32 Mid = 2147483648; // 2^31
-			char Dir = '?';
-			if (r > Mid)
-			{
-				Dir = Above;
-				r -= Mid;
-			}
-			else
-			{
-				Dir = Below;
-				r = Mid - r;
-			}
-			double h = r / (360000.0 * 10.0);
-			double m = 60.0 * (h - (int)h);
-			double s = 60.0 * (m - (int)m);
-			return string.Format("{0} {1} {2:0.000} {3}", (int)h, (int)m, s, Dir);
-		}
+    private static string SizeToString(byte s)
+    {
+        var strUnit = "cm";
+        var intBase = s >> 4;
+        var intPow = s & 0x0f;
+        if (intPow >= 2)
+        {
+            intPow -= 2;
+            strUnit = "m";
+        }
+        /*
+        if (intPow >= 3)
+        {
+            intPow -= 3;
+            strUnit = "km";
+        }
+        */
+        var sb = new StringBuilder();
+        sb.AppendFormat("{0}", intBase);
+        for (; intPow > 0; intPow--)
+        {
+            sb.Append('0');
+        }
+        sb.Append(strUnit);
+        return sb.ToString();
+    }
 
-		private string ToAlt(UInt32 a)
-		{
-			double alt = (a / 100.0) - 100000.00;
-			return string.Format("{0:0.00}m", alt);
-		}
+    private static string LonToTime(uint r)
+    {
+        var dir = 'E';
+        if (r > Mid)
+        {
+            dir = 'W';
+            r -= Mid;
+        }
+        var h = r / (360000.0 * 10.0);
+        var m = 60.0 * (h - (int)h);
+        var s = 60.0 * (m - (int)m);
+        return $"{(int)h} {(int)m} {s:0.000} {dir}";
+    }
 
-		public RecordLOC(RecordReader rr)
-		{
-			VERSION = rr.ReadByte(); // must be 0!
-			SIZE = rr.ReadByte();
-			HORIZPRE = rr.ReadByte();
-			VERTPRE = rr.ReadByte();
-			LATITUDE = rr.ReadUInt32();
-			LONGITUDE = rr.ReadUInt32();
-			ALTITUDE = rr.ReadUInt32();
-		}
+    private static string ToTime(uint r, char below,char above)
+    {
+        var dir = '?';
+        if (r > Mid)
+        {
+            dir = above;
+            r -= Mid;
+        }
+        else
+        {
+            dir = below;
+            r = Mid - r;
+        }
+        var h = r / (360000.0 * 10.0);
+        var m = 60.0 * (h - (int)h);
+        var s = 60.0 * (m - (int)m);
+        return $"{(int)h} {(int)m} {s:0.000} {dir}";
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3} {4} {5}",
-				ToTime(LATITUDE,'S','N'),
-				ToTime(LONGITUDE,'W','E'),
-				ToAlt(ALTITUDE),
-				SizeToString(SIZE),
-				SizeToString(HORIZPRE),
-				SizeToString(VERTPRE));
-		}
+    private static string ToAlt(uint a)
+    {
+        var alt = (a / 100.0) - 100000.00;
+        return $"{alt:0.00}m";
+    }
 
-	}
+    public override string ToString()
+    {
+        return $"{ToTime(Latitude, 'S', 'N')} {ToTime(Longitude, 'W', 'E')} " +
+               $"{ToAlt(Altitude)} {SizeToString(Size)} {SizeToString(HorizontalPrecision)} {SizeToString(VerticalPrecision)}";
+    }
 }

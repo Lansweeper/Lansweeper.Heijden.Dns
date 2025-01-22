@@ -1,6 +1,8 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
 
-#region Rfc info
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://www.ietf.org/rfc/rfc2535.txt
  * 4.1 SIG RDATA Format
@@ -30,48 +32,33 @@ using System;
 
 
 */
-#endregion
-
-namespace Heijden.DNS
+public class RecordSIG : Record
 {
-	public class RecordSIG : Record
-	{
-		public UInt16 TYPECOVERED;
-		public byte ALGORITHM;
-		public byte LABELS;
-		public UInt32 ORIGINALTTL;
-		public UInt32 SIGNATUREEXPIRATION;
-		public UInt32 SIGNATUREINCEPTION;
-		public UInt16 KEYTAG;
-		public string SIGNERSNAME;
-		public string SIGNATURE;
+    public ushort TypeCovered { get; set; }
+    public byte Algorithm { get; set; }
+    public byte Labels { get; set; }
+    public uint OriginalTtl { get; set; }
+    public uint SignatureExpiration { get; set; }
+    public uint SignatureInception { get; set; }
+    public ushort KeyTag { get; set; }
+    public string SignersName { get; set; }
+    public string Signature { get; set; }
 
-		public RecordSIG(RecordReader rr)
-		{
-			TYPECOVERED = rr.ReadUInt16();
-			ALGORITHM = rr.ReadByte();
-			LABELS = rr.ReadByte();
-			ORIGINALTTL = rr.ReadUInt32();
-			SIGNATUREEXPIRATION = rr.ReadUInt32();
-			SIGNATUREINCEPTION = rr.ReadUInt32();
-			KEYTAG = rr.ReadUInt16();
-			SIGNERSNAME = rr.ReadDomainName();
-			SIGNATURE = rr.ReadString();
-		}
+    public RecordSIG(RecordReader rr)
+    {
+        TypeCovered = rr.ReadUInt16();
+        Algorithm = rr.ReadByte();
+        Labels = rr.ReadByte();
+        OriginalTtl = rr.ReadUInt32();
+        SignatureExpiration = rr.ReadUInt32();
+        SignatureInception = rr.ReadUInt32();
+        KeyTag = rr.ReadUInt16();
+        SignersName = rr.ReadDomainName();
+        Signature = rr.ReadString();
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1} {2} {3} {4} {5} {6} {7} \"{8}\"",
-				TYPECOVERED,
-				ALGORITHM,
-				LABELS,
-				ORIGINALTTL,
-				SIGNATUREEXPIRATION,
-				SIGNATUREINCEPTION,
-				KEYTAG,
-				SIGNERSNAME,
-				SIGNATURE);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{TypeCovered} {Algorithm} {Labels} {OriginalTtl} {SignatureExpiration} {SignatureInception} {KeyTag} {SignersName} \"{Signature}\"";
+    }
 }

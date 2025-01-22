@@ -1,5 +1,10 @@
-using System;
+// ReSharper disable ConvertToPrimaryConstructor
+// Sequence of the reads is important
+
 using System.Text;
+
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * http://tools.ietf.org/rfc/rfc1348.txt  
  * http://tools.ietf.org/html/rfc1706
@@ -30,43 +35,40 @@ using System.Text;
 
 
  */
-
-namespace Heijden.DNS
+public class RecordNSAP : Record
 {
-	public class RecordNSAP : Record
-	{
-		public ushort LENGTH;
-		public byte[] NSAPADDRESS;
+    public ushort Length { get; set; }
+    public byte[] NsapAddress { get; set; }
 
-		public RecordNSAP(RecordReader rr)
-		{
-			LENGTH = rr.ReadUInt16();
-			NSAPADDRESS = rr.ReadBytes(LENGTH);
-		}
+    public RecordNSAP(RecordReader rr)
+    {
+        Length = rr.ReadUInt16();
+        NsapAddress = rr.ReadBytes(Length);
+    }
 
-		public override string ToString()
-		{
-			StringBuilder sb = new StringBuilder();
-			sb.AppendFormat("{0} ", LENGTH);
-			for (int intI = 0; intI < NSAPADDRESS.Length; intI++)
-				sb.AppendFormat("{0:X00}", NSAPADDRESS[intI]);
-			return sb.ToString();
-		}
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append($"{Length} ");
+        foreach (var t in NsapAddress)
+        {
+            sb.Append($"{t:X00}");
+        }
+        return sb.ToString();
+    }
 
-		public string ToGOSIPV2()
-		{
-			return string.Format("{0:X}.{1:X}.{2:X}.{3:X}.{4:X}.{5:X}.{6:X}{7:X}.{8:X}",
-				NSAPADDRESS[0],							// AFI
-				NSAPADDRESS[1]  << 8  | NSAPADDRESS[2],	// IDI
-				NSAPADDRESS[3],							// DFI
-				NSAPADDRESS[4]  << 16 | NSAPADDRESS[5] << 8 | NSAPADDRESS[6], // AA
-				NSAPADDRESS[7]  << 8  | NSAPADDRESS[8],	// Rsvd
-				NSAPADDRESS[9]  << 8  | NSAPADDRESS[10],// RD
-				NSAPADDRESS[11] << 8  | NSAPADDRESS[12],// Area
-				NSAPADDRESS[13] << 16 | NSAPADDRESS[14] << 8 | NSAPADDRESS[15], // ID-High
-				NSAPADDRESS[16] << 16 | NSAPADDRESS[17] << 8 | NSAPADDRESS[18], // ID-Low
-				NSAPADDRESS[19]);
-		}
-
-	}
+    public string ToGOSIPV2()
+    {
+        return string.Format("{0:X}.{1:X}.{2:X}.{3:X}.{4:X}.{5:X}.{6:X}{7:X}.{8:X}",
+            NsapAddress[0],							// AFI
+            NsapAddress[1]  << 8  | NsapAddress[2],	// IDI
+            NsapAddress[3],							// DFI
+            NsapAddress[4]  << 16 | NsapAddress[5] << 8 | NsapAddress[6], // AA
+            NsapAddress[7]  << 8  | NsapAddress[8],	// Rsvd
+            NsapAddress[9]  << 8  | NsapAddress[10],// RD
+            NsapAddress[11] << 8  | NsapAddress[12],// Area
+            NsapAddress[13] << 16 | NsapAddress[14] << 8 | NsapAddress[15], // ID-High
+            NsapAddress[16] << 16 | NsapAddress[17] << 8 | NsapAddress[18], // ID-Low
+            NsapAddress[19]);
+    }
 }

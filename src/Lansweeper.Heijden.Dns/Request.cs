@@ -1,40 +1,33 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Lansweeper.Heijden.Dns.Enums;
 
-namespace Heijden.DNS
+namespace Lansweeper.Heijden.Dns;
+
+public class Request
 {
-	public class Request
-	{
-		public Header header;
+    public Header Header { get; } = new()
+    {
+        OperationCode = OPCode.Query,
+        QuestionCount = 0
+    };
 
-		private List<Question> questions;
+    internal List<Question> Questions { get; } = [];
 
-		public Request()
-		{
-			header = new Header();
-			header.OPCODE = OPCode.Query;
-			header.QDCOUNT = 0;
+    public void AddQuestion(Question question)
+    {
+        Questions.Add(question);
+        Header.QuestionCount = (ushort)Questions.Count;
+    }
 
-			questions = new List<Question>();
-		}
+    public byte[] GetData()
+    {
+        Header.QuestionCount = (ushort)Questions.Count;
 
-		public void AddQuestion(Question question)
-		{
-			questions.Add(question);
-		}
-
-		public byte[] Data
-		{
-			get
-			{
-				List<byte> data = new List<byte>();
-				header.QDCOUNT = (ushort)questions.Count;
-				data.AddRange(header.Data);
-				foreach (Question q in questions)
-					data.AddRange(q.Data);
-				return data.ToArray();
-			}
-		}
-	}
+        var data = new List<byte>();
+        data.AddRange(Header.GetData());
+        foreach (var q in Questions)
+        {
+            data.AddRange(q.GetData());
+        }
+        return data.ToArray();
+    }
 }

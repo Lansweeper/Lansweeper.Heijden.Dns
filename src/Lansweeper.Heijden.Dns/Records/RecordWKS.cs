@@ -1,4 +1,5 @@
-using System;
+namespace Lansweeper.Heijden.Dns.Records;
+
 /*
  * 3.4.2. WKS RDATA format
 
@@ -44,32 +45,24 @@ In master files, both ports and protocols are expressed using mnemonics
 or decimal numbers.
 
  */
-namespace Heijden.DNS
+public class RecordWKS : Record
 {
-	public class RecordWKS : Record
-	{
-		public string ADDRESS;
-		public int PROTOCOL;
-		public byte[] BITMAP;
+    public string Address { get; set; }
+    public byte Protocol { get; set; }
+    public byte[] Bitmap { get; set; }
 
-		public RecordWKS(RecordReader rr)
-		{
-			ushort length = rr.ReadUInt16(-2);
-			ADDRESS = string.Format("{0}.{1}.{2}.{3}",
-				rr.ReadByte(),
-				rr.ReadByte(),
-				rr.ReadByte(),
-				rr.ReadByte());
-			PROTOCOL = (int)rr.ReadByte();
-			length -= 5;
-			BITMAP = new byte[length];
-			BITMAP = rr.ReadBytes(length);
-		}
+    public RecordWKS(RecordReader rr)
+    {
+        var length = rr.ReadUInt16(-2);
+        Address = $"{rr.ReadByte()}.{rr.ReadByte()}.{rr.ReadByte()}.{rr.ReadByte()}";
+        Protocol = rr.ReadByte();
+        length -= 5;
+        Bitmap = new byte[length];
+        Bitmap = rr.ReadBytes(length);
+    }
 
-		public override string ToString()
-		{
-			return string.Format("{0} {1}",ADDRESS,PROTOCOL);
-		}
-
-	}
+    public override string ToString()
+    {
+        return $"{Address} {Protocol}";
+    }
 }

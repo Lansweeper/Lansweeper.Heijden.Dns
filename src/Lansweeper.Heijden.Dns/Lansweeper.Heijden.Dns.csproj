@@ -1,21 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+	
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
-		<RootNamespace>Heijden.Dns</RootNamespace>
+		<RootNamespace>Lansweeper.Heijden.Dns</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsAotCompatible>true</IsAotCompatible>
+		<IsTrimmable>true</IsTrimmable>
+		<Authors>Lansweeper</Authors>
+		<Copyright>Lansweeper © 2024</Copyright>
+		<PackageIcon>LS.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryType>git</RepositoryType>
+		<NeutralLanguage>en</NeutralLanguage>
+		<Company>Lansweeper</Company>
+		<Title>$(AssemblyName)</Title>
 		<Description>A reusable DNS resolver for .NET.</Description>
+		<Product>$(AssemblyName)</Product>
+		<Version></Version>
 		<RepositoryUrl>https://github.com/Lansweeper/Lansweeper.Heijden.Dns</RepositoryUrl>
-		<Copyright>Lansweeper</Copyright>
+		<Configurations>Debug;Release;Release-nuget</Configurations>
+		<PackageTags>discovery;nuget</PackageTags>
 	</PropertyGroup>
-
+	
 	<ItemGroup>
-	  <None Remove="Records\totla.txt" />
-	  <None Remove="Root\named_root.txt" />
+	  <None Include="..\..\LS.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="Records\totla.txt" />
-	  <Content Include="Root\named_root.txt" />
+		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
 	</ItemGroup>
 
 </Project>
