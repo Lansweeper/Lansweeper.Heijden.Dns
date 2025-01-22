@@ -15,7 +15,7 @@ parameters:
     
   git-primary-branch:
     type: string
-    default: "main"
+    default: "master"
 
 executors:
   node:
