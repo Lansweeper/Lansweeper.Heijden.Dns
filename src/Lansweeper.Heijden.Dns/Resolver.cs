@@ -31,15 +31,6 @@ public sealed class Resolver : IResolver
     /// </summary>
     private const int DefaultPort = 53;
 
-    /// <summary>
-    /// Gets list of OPENDNS servers
-    /// </summary>
-    public static readonly IPEndPoint[] DefaultDnsServers =
-    [
-        new(IPAddress.Parse("208.67.222.222"), DefaultPort), 
-        new(IPAddress.Parse("208.67.220.220"), DefaultPort)
-    ];
-
     private ushort _unique;
     private bool _useCache;
 
@@ -249,28 +240,24 @@ public sealed class Resolver : IResolver
 
     private async Task<Response> UdpRequest(Request request, CancellationToken cancellationToken)
     {
-        for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
+        for (var attempt = 0; attempt <= Retries; attempt++)
         {
-            for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
+            foreach (var dnsServer in _dnsServers)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var endpoint = _dnsServers[intDnsServer];
-                using var udpClient = new UdpClient(endpoint.Address.ToString(), endpoint.Port);
-                udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, TimeOut);
-
+                using var udpClient = new UdpClient(dnsServer.Address.ToString(), dnsServer.Port);
                 try
                 {
-                    await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await udpClient.SendAsync(request.GetData(), ct), TimeOut, cancellationToken)
-                        .ConfigureAwait(false);
-                    var result = await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await udpClient.ReceiveAsync(ct), TimeOut, cancellationToken).ConfigureAwait(false);
-                    var response = new Response(endpoint, result.Buffer);
+                    await udpClient.SendAsync(request.GetData(), cancellationToken).ConfigureAwait(false);
+                    var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                    var response = new Response(dnsServer, result.Buffer);
                     AddToCache(response);
                     return response;
                 }
                 catch (SocketException)
                 {
-                    Verbose($";; Connection to nameserver {intDnsServer + 1} failed");
+                    Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                     continue; // next try
                 }
                 finally
@@ -282,29 +269,26 @@ public sealed class Resolver : IResolver
             }
         }
 
-        return new Response { Error = "Timeout Error" };
+        return new Response { Error = "Connection failed" };
     }
 
     private async Task<Response> TcpRequest(Request request, CancellationToken cancellationToken)
     {
-        for (var intAttempts = 0; intAttempts <= Retries; intAttempts++)
+        for (var attempt = 0; attempt <= Retries; attempt++)
         {
-            for (var intDnsServer = 0; intDnsServer < _dnsServers.Count; intDnsServer++)
+            foreach (var dnsServer in _dnsServers)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using var tcpClient = new TcpClient();
-                tcpClient.ReceiveTimeout = TimeOut;
-
                 try
                 {
-                    await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await tcpClient.ConnectAsync(_dnsServers[intDnsServer].Address, _dnsServers[intDnsServer].Port, ct), TimeOut, cancellationToken)
-                        .ConfigureAwait(false);
+                    await tcpClient.ConnectAsync(dnsServer.Address, dnsServer.Port, cancellationToken).ConfigureAwait(false);
                     
                     if (!tcpClient.Connected)
                     {
                         tcpClient.Close();
-                        Verbose($";; Connection to nameserver {(intDnsServer + 1)} failed");
+                        Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                         continue;
                     }
 
@@ -316,26 +300,25 @@ public sealed class Resolver : IResolver
                     await bs.FlushAsync(cancellationToken).ConfigureAwait(false);
 
                     var transferResponse = new Response();
-                    var intSoa = 0;
-                    var intMessageSize = 0;
+                    var soa = 0;
+                    var messageSize = 0;
 
                     while (true)
                     {
-                        var intLength = bs.ReadByte() << 8 | bs.ReadByte();
-                        if (intLength <= 0)
+                        var length = bs.ReadByte() << 8 | bs.ReadByte();
+                        if (length <= 0)
                         {
                             tcpClient.Close();
-                            Verbose($";; Connection to nameserver {(intDnsServer + 1)} failed");
+                            Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                             throw new SocketException(); // next try
                         }
 
-                        intMessageSize += intLength;
+                        messageSize += length;
 
-                        data = new byte[intLength];
-                        var bytesRead = await TimeoutHelper.ExecuteAsyncWithTimeout(async ct => await bs.ReadAsync(data.AsMemory(), ct), TimeOut, cancellationToken)
-                                        .ConfigureAwait(false);
+                        data = new byte[length];
+                        var bytesRead = await bs.ReadAsync(data.AsMemory(), cancellationToken).ConfigureAwait(false);
                         
-                        var response = new Response(_dnsServers[intDnsServer], data[..bytesRead]);
+                        var response = new Response(dnsServer, data[..bytesRead]);
                         if (response.Header.ResponseCode != RCode.NoError)
                         {
                             return response;
@@ -358,22 +341,23 @@ public sealed class Resolver : IResolver
 
                         if (response.Answers[0].Type == Type.SOA)
                         {
-                            intSoa++;
+                            soa++;
                         }
 
-                        if (intSoa == 2)
+                        if (soa == 2)
                         {
                             transferResponse.Header.QuestionCount = (ushort)transferResponse.Questions.Count;
                             transferResponse.Header.AnswerCount = (ushort)transferResponse.Answers.Count;
                             transferResponse.Header.NameServerCount = (ushort)transferResponse.Authorities.Count;
                             transferResponse.Header.AdditionRecordCount = (ushort)transferResponse.Additionals.Count;
-                            transferResponse.MessageSize = intMessageSize;
+                            transferResponse.MessageSize = messageSize;
                             return transferResponse;
                         }
                     }
                 } 
                 catch (SocketException)
                 {
+                    Verbose($";; Connection to {dnsServer.Address} failed");
                     continue; // next try
                 }
                 finally
@@ -385,7 +369,7 @@ public sealed class Resolver : IResolver
                 }
             }
         }
-        return new Response { Error = "Timeout Error" };
+        return new Response { Error = "Connection failed" };
     }
 
     /// <inheritdoc />
@@ -423,12 +407,29 @@ public sealed class Resolver : IResolver
         request.Header.Id = _unique;
         request.Header.RecursionDesired = Recursion;
 
-        return TransportType switch
+        try
         {
-            TransportType.Udp => await UdpRequest(request, cancellationToken),
-            TransportType.Tcp => await TcpRequest(request, cancellationToken),
-            _ => new Response { Error = "Unknown TransportType" }
-        };
+            return TransportType switch
+            {
+                TransportType.Udp => await TimeoutHelper
+                    .ExecuteAsyncWithTimeout(async ct => await UdpRequest(request, ct), TimeOut, cancellationToken)
+                    .ConfigureAwait(false),
+                TransportType.Tcp => await TimeoutHelper
+                    .ExecuteAsyncWithTimeout(async ct => await TcpRequest(request, ct), TimeOut, cancellationToken)
+                    .ConfigureAwait(false),
+                _ => new Response { Error = "Unknown TransportType" }
+            };
+        }
+        catch (TimeoutException)
+        {
+            Verbose($"Connection timed out");
+            return new Response() { Error = "Connection timed out" };
+        }
+        catch (Exception e)
+        {
+            Verbose($"Connection failed");
+            return new Response() { Error = e.Message };
+        }
     }
 
     /// <summary>
