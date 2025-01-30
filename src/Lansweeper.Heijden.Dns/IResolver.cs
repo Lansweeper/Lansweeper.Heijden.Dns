@@ -31,6 +31,11 @@ public interface IResolver : IDisposable
     TransportType TransportType { get; set; }
 
     /// <summary>
+    /// By providing a local address, you specify which network interface to use for the connection.
+    /// </summary>
+    IPAddress? LocalAddress { get; set; }
+
+    /// <summary>
     /// Gets or sets list of DNS servers to use
     /// </summary>
     IPEndPoint[] DnsServers { get; set; }

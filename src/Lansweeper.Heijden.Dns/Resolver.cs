@@ -107,6 +107,9 @@ public sealed class Resolver : IResolver
     public TransportType TransportType { get; set; }
 
     /// <inheritdoc />
+    public IPAddress? LocalAddress { get; set; }
+
+    /// <inheritdoc />
     public IPEndPoint[] DnsServers
     {
         get
@@ -249,6 +252,11 @@ public sealed class Resolver : IResolver
                 using var udpClient = new UdpClient(dnsServer.Address.ToString(), dnsServer.Port);
                 try
                 {
+                    if (LocalAddress is not null)
+                    {
+                        udpClient.Client.Bind(new IPEndPoint(LocalAddress,0));
+                    }
+
                     await udpClient.SendAsync(request.GetData(), cancellationToken).ConfigureAwait(false);
                     var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                     var response = new Response(dnsServer, result.Buffer);
@@ -283,6 +291,11 @@ public sealed class Resolver : IResolver
                 using var tcpClient = new TcpClient();
                 try
                 {
+                    if (LocalAddress is not null)
+                    {
+                        tcpClient.Client.Bind(new IPEndPoint(LocalAddress, 0));
+                    }
+
                     await tcpClient.ConnectAsync(dnsServer.Address, dnsServer.Port, cancellationToken).ConfigureAwait(false);
                     
                     if (!tcpClient.Connected)
