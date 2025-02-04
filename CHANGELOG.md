@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.4.0...v1.5.0) (2025-02-04)
+
+
+### Features
+
+* ACME-30470 - Update CODEOWNERS ([5b96260](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/5b96260f89983a9776b114c4e07d855a39509bf1))
+
 # [1.4.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.3.0...v1.4.0) (2025-02-04)
 
 
