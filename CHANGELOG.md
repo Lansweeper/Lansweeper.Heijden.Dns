@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.3.0...v1.4.0) (2025-02-04)
+
+
+### Features
+
+* ACME-30470 - Update catalog-info.repo.yaml ([9e076b2](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/9e076b209ced416147b186ebccb01a80bc6acc09))
+
 # [1.3.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.2.5...v1.3.0) (2025-01-30)
 
 
