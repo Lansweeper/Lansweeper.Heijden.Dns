@@ -7,4 +7,4 @@ metadata:
   name: Lansweeper.Heijden.Dns
 spec:
   lifecycle: stable
-  owner: discovery-1-team
+  owner: discovery-1
