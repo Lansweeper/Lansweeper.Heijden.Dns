@@ -2,9 +2,12 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using Lansweeper.Heijden.Dns.Enums;
 using Lansweeper.Heijden.Dns.Records;
+using Lansweeper.Networking;
+using Lansweeper.Timeout;
 using Type = Lansweeper.Heijden.Dns.Enums.Type;
 
 namespace Lansweeper.Heijden.Dns;
@@ -37,7 +40,7 @@ public sealed class Resolver : IResolver
     private readonly List<IPEndPoint> _dnsServers = [];
 
     private readonly ReaderWriterLockSlim _responseCacheLock = new();
-    private readonly Dictionary<string,Response> _responseCache = [];
+    private readonly Dictionary<string, Response> _responseCache = [];
 
     /// <summary>
     /// Constructor of Resolver using DNS servers specified.
@@ -61,10 +64,10 @@ public sealed class Resolver : IResolver
     /// <param name="serverIpAddress">DNS server to use</param>
     /// <param name="serverPortNumber">DNS port to use</param>
     public Resolver(IPAddress serverIpAddress, int serverPortNumber = DefaultPort)
-        : this([new IPEndPoint(serverIpAddress,serverPortNumber)])
+        : this([new IPEndPoint(serverIpAddress, serverPortNumber)])
     {
     }
-    
+
     /// <summary>
     /// Resolver constructor, using DNS servers specified by Windows
     /// </summary>
@@ -93,7 +96,7 @@ public sealed class Resolver : IResolver
     {
         public string Message { get; set; } = message;
     }
-    
+
     /// <inheritdoc />
     public int TimeOut { get; set; }
 
@@ -108,6 +111,9 @@ public sealed class Resolver : IResolver
 
     /// <inheritdoc />
     public IPAddress? LocalAddress { get; set; }
+
+    /// <inheritdoc />
+    public string? NetworkNamespace { get; set; }
 
     /// <inheritdoc />
     public IPEndPoint[] DnsServers
@@ -205,7 +211,7 @@ public sealed class Resolver : IResolver
         {
             _responseCacheLock.ExitReadLock();
         }
-        
+
         var timeLived = (int)((DateTime.UtcNow.Ticks - response.TimeStamp.Ticks) / TimeSpan.TicksPerSecond);
         foreach (var rr in response.GetResourceRecord())
         {
@@ -237,7 +243,7 @@ public sealed class Resolver : IResolver
         }
         finally
         {
-           _responseCacheLock.ExitWriteLock();
+            _responseCacheLock.ExitWriteLock();
         }
     }
 
@@ -249,13 +255,18 @@ public sealed class Resolver : IResolver
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using var udpClient = new UdpClient(dnsServer.Address.ToString(), dnsServer.Port);
                 try
                 {
+                    UdpClientBuilder builder = new(dnsServer.Address.ToString(), (ushort)dnsServer.Port);
                     if (LocalAddress is not null)
                     {
-                        udpClient.Client.Bind(new IPEndPoint(LocalAddress,0));
+                        builder.WithLocalIP(LocalAddress);
                     }
+                    if (NetworkNamespace is not null && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        builder.WithNetworkNamespace(NetworkNamespace);
+                    }
+                    using var udpClient = builder.Build();
 
                     await udpClient.SendAsync(request.GetData(), cancellationToken).ConfigureAwait(false);
                     var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
@@ -271,8 +282,6 @@ public sealed class Resolver : IResolver
                 finally
                 {
                     _unique++;
-                    // close the connection
-                    udpClient.Close();
                 }
             }
         }
@@ -288,19 +297,24 @@ public sealed class Resolver : IResolver
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using var tcpClient = new TcpClient();
                 try
                 {
+                    var builder = new TcpClientBuilder();
                     if (LocalAddress is not null)
                     {
-                        tcpClient.Client.Bind(new IPEndPoint(LocalAddress, 0));
+                        builder.WithLocalIP(LocalAddress);
                     }
+                    if (NetworkNamespace is not null && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        builder.WithNetworkNamespace(NetworkNamespace);
+                    }
+                    using var tcpClient = builder.Build();
 
-                    await tcpClient.ConnectAsync(dnsServer.Address, dnsServer.Port, cancellationToken).ConfigureAwait(false);
-                    
+                    await tcpClient.ConnectAsync(dnsServer.Address, (ushort)dnsServer.Port, cancellationToken).ConfigureAwait(false);
+
                     if (!tcpClient.Connected)
                     {
-                        tcpClient.Close();
+                        tcpClient.Dispose();
                         Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                         continue;
                     }
@@ -321,7 +335,7 @@ public sealed class Resolver : IResolver
                         var length = bs.ReadByte() << 8 | bs.ReadByte();
                         if (length <= 0)
                         {
-                            tcpClient.Close();
+                            tcpClient.Dispose();
                             Verbose($";; Connection to nameserver {dnsServer.Address} failed");
                             throw new SocketException(); // next try
                         }
@@ -330,7 +344,7 @@ public sealed class Resolver : IResolver
 
                         data = new byte[length];
                         var bytesRead = await bs.ReadAsync(data.AsMemory(), cancellationToken).ConfigureAwait(false);
-                        
+
                         var response = new Response(dnsServer, data[..bytesRead]);
                         if (response.Header.ResponseCode != RCode.NoError)
                         {
@@ -367,7 +381,7 @@ public sealed class Resolver : IResolver
                             return transferResponse;
                         }
                     }
-                } 
+                }
                 catch (SocketException)
                 {
                     Verbose($";; Connection to {dnsServer.Address} failed");
@@ -376,9 +390,6 @@ public sealed class Resolver : IResolver
                 finally
                 {
                     _unique++;
-
-                    // close the socket
-                    tcpClient.Close();
                 }
             }
         }
@@ -456,7 +467,7 @@ public sealed class Resolver : IResolver
         foreach (var n in NetworkInterface.GetAllNetworkInterfaces())
         {
             if (n.OperationalStatus != OperationalStatus.Up) continue;
-            
+
             var ipProps = n.GetIPProperties();
             foreach (var ipAddr in ipProps.DnsAddresses)
             {
@@ -464,9 +475,9 @@ public sealed class Resolver : IResolver
                 list.Add(entry);
             }
         }
-        return [..list];
-    } 
-   
+        return [.. list];
+    }
+
     private async Task<IPHostEntry> MakeEntry(string hostName, CancellationToken cancellationToken)
     {
         var entry = new IPHostEntry { HostName = hostName };
@@ -488,8 +499,8 @@ public sealed class Resolver : IResolver
                 aliases.Add(answerRR.Name);
             }
         }
-        entry.AddressList = [..addresses];
-        entry.Aliases = [..aliases];
+        entry.AddressList = [.. addresses];
+        entry.Aliases = [.. aliases];
 
         return entry;
     }
@@ -504,24 +515,24 @@ public sealed class Resolver : IResolver
         switch (ip.AddressFamily)
         {
             case AddressFamily.InterNetwork:
-            {
-                var sb = new StringBuilder("in-addr.arpa.");
-                foreach (var b in ip.GetAddressBytes())
                 {
-                    sb.Insert(0, $"{b}.");
+                    var sb = new StringBuilder("in-addr.arpa.");
+                    foreach (var b in ip.GetAddressBytes())
+                    {
+                        sb.Insert(0, $"{b}.");
+                    }
+                    return sb.ToString();
                 }
-                return sb.ToString();
-            }
             case AddressFamily.InterNetworkV6:
-            {
-                var sb = new StringBuilder("ip6.arpa.");
-                foreach (var b in ip.GetAddressBytes())
                 {
-                    sb.Insert(0, $"{(b >> 4) & 0xf:x}.");
-                    sb.Insert(0, $"{(b >> 0) & 0xf:x}.");
+                    var sb = new StringBuilder("ip6.arpa.");
+                    foreach (var b in ip.GetAddressBytes())
+                    {
+                        sb.Insert(0, $"{(b >> 4) & 0xf:x}.");
+                        sb.Insert(0, $"{(b >> 0) & 0xf:x}.");
+                    }
+                    return sb.ToString();
                 }
-                return sb.ToString();
-            }
             default:
                 return "?";
         }
@@ -542,15 +553,15 @@ public sealed class Resolver : IResolver
     {
         var response = await Query(GetArpaFromIp(ip), QType.PTR, QClass.IN, cancellationToken).ConfigureAwait(false);
         var recordPTR = response.GetRecordsOfType<RecordPTR>().FirstOrDefault();
-        return recordPTR is null 
-            ? new IPHostEntry() 
+        return recordPTR is null
+            ? new IPHostEntry()
             : await MakeEntry(recordPTR.Name, cancellationToken).ConfigureAwait(false);
     }
 
     //// <inheritdoc />
     public async Task<IPHostEntry> GetHostEntry(string hostNameOrAddress, CancellationToken cancellationToken = default)
     {
-        return IPAddress.TryParse(hostNameOrAddress, out var iPAddress) 
+        return IPAddress.TryParse(hostNameOrAddress, out var iPAddress)
             ? await GetHostEntry(iPAddress, cancellationToken).ConfigureAwait(false)
             : await MakeEntry(hostNameOrAddress, cancellationToken).ConfigureAwait(false);
     }

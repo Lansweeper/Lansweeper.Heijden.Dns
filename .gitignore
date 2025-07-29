@@ -138,7 +138,11 @@ publish/
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
 # If using the old MSBuild-Integrated Package Restore, uncomment this:
-#!**/packages/repositories.config
+#!**/[Pp]ackages/repositories.config
+# NuGet v3's project.json files produces more ignorable files
+*.nuget.props
+*.nuget.targets
+[Nn]uget.config
 
 # Windows Azure Build Output
 csx/

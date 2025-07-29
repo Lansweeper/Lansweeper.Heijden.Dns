@@ -38,4 +38,9 @@
 		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Lansweeper.Networking" Version="1.0.0" />
+	  <PackageReference Include="Lansweeper.Timeout" Version="1.1.0" />
+	</ItemGroup>
+
 </Project>
