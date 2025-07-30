@@ -3,20 +3,29 @@ kind: Component
 metadata:
   name: Lansweeper.Heijden.Dns
   description: A reusable DNS resolver for .NET.
-  version: 1.5.0
+  version: 1.6.0
   annotations:
     github.com/project-slug: Lansweeper/Lansweeper.Heijden.Dns
     sonarqube.org/project-key: Lansweeper_Lansweeper.Heijden.Dns
     circleci.com/project-slug: github/Lansweeper/Lansweeper.Heijden.Dns
+    backstage.io/techdocs-ref: url:https://github.com/Lansweeper/Lansweeper.Heijden.Dns/blob/main/src/Lansweeper.Heijden.Dns/README.md
   tags:
    - discovery
    - nuget
 spec:
   type: library
   lifecycle: production
+  owner: discovery-1
   dependsOn:
     - repository:default/Lansweeper.Heijden.Dns
+    - component:default/Lansweeper.Networking
+    - component:default/Lansweeper.Timeout
   nuget:
-    version: 1.5.0
+    version: 1.6.0
     targetFrameworks:
       - net8.0
+    dependencies:
+      - id: Lansweeper.Networking
+        version: 1.0.0
+      - id: Lansweeper.Timeout
+        version: 1.1.0
