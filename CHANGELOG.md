@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.5.0...v1.6.0) (2025-07-30)
+
+
+### Features
+
+* network namespace support #ACME-38448 ([#23](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/issues/23)) ([302afc7](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/302afc75cfa2c0a8acc60d55bddfa20b4d6cb10d)), closes [#ACME-38448](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/issues/ACME-38448)
+
 # [1.5.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.4.0...v1.5.0) (2025-02-04)
 
 
