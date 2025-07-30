@@ -36,6 +36,12 @@ public interface IResolver : IDisposable
     IPAddress? LocalAddress { get; set; }
 
     /// <summary>
+    /// Gets or sets the network namespace to use for the connection.
+    /// Only supported on Linux.
+    /// </summary>
+    string? NetworkNamespace { get; set; }
+
+    /// <summary>
     /// Gets or sets list of DNS servers to use
     /// </summary>
     IPEndPoint[] DnsServers { get; set; }
