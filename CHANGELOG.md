@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.6.0...v1.6.1) (2025-09-01)
+
+
+### Bug Fixes
+
+* HostName is not nullable ([#28](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/issues/28)) #ACME-39944 ([4290a53](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/commit/4290a5339942cfd382ce4b43ce7644ab1a809462)), closes [#ACME-39944](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/issues/ACME-39944)
+
 # [1.6.0](https://github.com/Lansweeper/Lansweeper.Heijden.Dns/compare/v1.5.0...v1.6.0) (2025-07-30)
 
 
