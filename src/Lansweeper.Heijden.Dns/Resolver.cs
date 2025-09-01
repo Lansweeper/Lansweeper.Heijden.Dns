@@ -554,7 +554,7 @@ public sealed class Resolver : IResolver
         var response = await Query(GetArpaFromIp(ip), QType.PTR, QClass.IN, cancellationToken).ConfigureAwait(false);
         var recordPTR = response.GetRecordsOfType<RecordPTR>().FirstOrDefault();
         return recordPTR is null
-            ? new IPHostEntry()
+            ? new IPHostEntry() { HostName = string.Empty } // HostName is not nullable
             : await MakeEntry(recordPTR.Name, cancellationToken).ConfigureAwait(false);
     }
 
